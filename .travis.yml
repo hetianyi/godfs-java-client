@@ -1,10 +1,11 @@
-sudo: false
 language: java
+jdk:
+  - oraclejdk8
+  - openjdk8
+install: true
 
-java:
-    - 1.8
-
-install: mvn install
+script:
+  - "mvn clean package -Dmaven.test.skip=true"
 
 #script:
 #  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
