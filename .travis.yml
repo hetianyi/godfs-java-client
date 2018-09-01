@@ -1,13 +1,13 @@
 sudo: false
-language: go
+language: java
 
-go:
-    - 1.9.x
+java:
+    - 1.8
 
-install: true
+install: mvn install
 
-script:
-  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - cd docker
-  - docker build -t hehety/godfs:latest .
-  - docker push hehety/godfs
+#script:
+#  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+#  - cd docker
+#  - docker build -t hehety/godfs:latest .
+#  - docker push hehety/godfs
