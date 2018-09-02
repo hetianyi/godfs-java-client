@@ -1,22 +1,21 @@
 package com.foxless.godfs.bean;
 
 /**
- * tracker服务实例
+ * storage服务实例
  *
  * @author hetianyi
  * @version 0.1.0
  * @date 2018/09/02
  */
-public class Tracker {
+public class Storage {
 
     private String host;
 
-    private int port = 1022;
+    private int port = 1024;
 
     private boolean online;
-    /* client和每个tracker的最大连接数 */
+    /* client和每个storage的最大连接数 */
     private int maxConnections;
-
 
 
     public String getHost() {
