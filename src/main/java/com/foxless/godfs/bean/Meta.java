@@ -3,7 +3,7 @@ package com.foxless.godfs.bean;
 public class Meta {
     private int operation;
     private long metaLength;
-    private long BodyLength;
+    private long bodyLength;
     private byte[] metaBody;
     private Exception error;
 
@@ -23,14 +23,6 @@ public class Meta {
         this.metaLength = metaLength;
     }
 
-    public long getBodyLength() {
-        return BodyLength;
-    }
-
-    public void setBodyLength(long bodyLength) {
-        BodyLength = bodyLength;
-    }
-
     public byte[] getMetaBody() {
         return metaBody;
     }
@@ -45,5 +37,13 @@ public class Meta {
 
     public void setError(Exception error) {
         this.error = error;
+    }
+
+    public long getBodyLength() {
+        return bodyLength;
+    }
+
+    public void setBodyLength(long bodyLength) {
+        this.bodyLength = bodyLength;
     }
 }

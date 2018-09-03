@@ -38,5 +38,16 @@ public class Const {
     public static boolean containsOperationCode(int operation) {
         return operationHeadMap.containsKey(operation);
     }
+    public static byte[] getOperationHeadBytes(int operation) {
+        return operationHeadMap.get(operation);
+    }
+    public static int getOperationByHeadBytes(byte[] op) {
+        for (Map.Entry<Integer, byte[]> entry : operationHeadMap.entrySet()) {
+            if (entry.getValue().equals(op)) {
+                return entry.getKey();
+            }
+        }
+        return 0;
+    }
 
 }
