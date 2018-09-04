@@ -99,23 +99,26 @@ public class Bridge {
         validateMeta.setUuid("JAVA-CLIENT-0.1.0");
 
         this.sendRequest(Const.O_CONNECT, validateMeta, 0, null);
-        this.receiveResponse((meta, ips) -> {
-            if (meta.getError() != null) {
-                throw meta.getError();
-            }
-            OperationValidationResponse response = JSON.parseObject(new String(meta.getMetaBody()), OperationValidationResponse.class);
-            log.debug("validate response status {} from server.", response.getStatus());
-            if (response.getStatus() == Const.STATUS_OK) {
-                log.info("validate success with tracker server: {}:{}", this.connection.getInetAddress().getHostAddress(), this.connection.getPort());
-            } else if (response.getStatus() == Const.STATUS_BAD_SECRET) {
-                log.error("validate failed with tracker server: {}:{} due to: {}", this.connection.getInetAddress().getHostAddress(), this.connection.getPort(), "STATUS_BAD_SECRET");
-                throw new IllegalStateException("STATUS_BAD_SECRET");
-            } else if (response.getStatus() == Const.STATUS_INTERNAL_SERVER_ERROR) {
-                log.error("validate failed with tracker server: {}:{} due to: {}", this.connection.getInetAddress().getHostAddress(), this.connection.getPort(), "STATUS_INTERNAL_SERVER_ERROR");
-                throw new IllegalStateException("STATUS_INTERNAL_SERVER_ERROR");
-            } else {
-                log.error("validate failed with tracker server: {}:{} due to: {}", this.connection.getInetAddress().getHostAddress(), this.connection.getPort(), response.getStatus());
-                throw new IllegalStateException("server response unknown status code: " + response.getStatus());
+        this.receiveResponse(new IResponseHandler() {
+            @Override
+            public void handle(Meta meta, InputStream ips) throws Exception {
+                if (meta.getError() != null) {
+                    throw meta.getError();
+                }
+                OperationValidationResponse response = JSON.parseObject(new String(meta.getMetaBody()), OperationValidationResponse.class);
+                log.debug("validate response status {} from server.", response.getStatus());
+                if (response.getStatus() == Const.STATUS_OK) {
+                    log.info("validate success with tracker server: {}:{}", connection.getInetAddress().getHostAddress(), connection.getPort());
+                } else if (response.getStatus() == Const.STATUS_BAD_SECRET) {
+                    log.error("validate failed with tracker server: {}:{} due to: {}", connection.getInetAddress().getHostAddress(), connection.getPort(), "STATUS_BAD_SECRET");
+                    throw new IllegalStateException("STATUS_BAD_SECRET");
+                } else if (response.getStatus() == Const.STATUS_INTERNAL_SERVER_ERROR) {
+                    log.error("validate failed with tracker server: {}:{} due to: {}", connection.getInetAddress().getHostAddress(), connection.getPort(), "STATUS_INTERNAL_SERVER_ERROR");
+                    throw new IllegalStateException("STATUS_INTERNAL_SERVER_ERROR");
+                } else {
+                    log.error("validate failed with tracker server: {}:{} due to: {}", connection.getInetAddress().getHostAddress(), connection.getPort(), response.getStatus());
+                    throw new IllegalStateException("server response unknown status code: " + response.getStatus());
+                }
             }
         });
     }

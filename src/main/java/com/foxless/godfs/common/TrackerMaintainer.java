@@ -3,6 +3,7 @@ package com.foxless.godfs.common;
 import com.alibaba.fastjson.JSON;
 import com.foxless.godfs.bean.EndPoint;
 import com.foxless.godfs.bean.Member;
+import com.foxless.godfs.bean.Meta;
 import com.foxless.godfs.bean.Tracker;
 import com.foxless.godfs.bean.meta.OperationGetStorageServerRequest;
 import com.foxless.godfs.bean.meta.OperationGetStorageServerResponse;
@@ -10,6 +11,7 @@ import com.foxless.godfs.config.ClientConfigurationBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -60,22 +62,25 @@ public class TrackerMaintainer implements Runnable {
                 OperationGetStorageServerRequest validateMeta = new OperationGetStorageServerRequest();
 
                 bridge.sendRequest(Const.O_SYNC_STORAGE, validateMeta, 0, null);
-                bridge.receiveResponse((meta, ips) -> {
-                    if (meta.getError() != null) {
-                        throw meta.getError();
-                    }
-                    OperationGetStorageServerResponse response = JSON.parseObject(new String(meta.getMetaBody()), OperationGetStorageServerResponse.class);
-                    log.debug("response status {} from server.", response.getStatus());
-                    if (response.getStatus() == Const.STATUS_OK) {
-                        if (null == response.getMembers()) {
-                            return;
+                bridge.receiveResponse(new IResponseHandler() {
+                    @Override
+                    public void handle(Meta meta, InputStream ips) throws Exception {
+                        if (meta.getError() != null) {
+                            throw meta.getError();
                         }
-                        Set<Member> members = new HashSet<>(response.getMembers().length);
-                        members.addAll(Arrays.asList(response.getMembers()));
-                        MemberManager.refresh(tracker, members);
-                    } else {
-                        log.error("tracker server {}:{} response status err {}", _bridge.getConnection().getInetAddress().getHostAddress(), _bridge.getConnection().getPort(), response.getStatus());
-                        throw new IllegalStateException("STATUS_BAD_SECRET");
+                        OperationGetStorageServerResponse response = JSON.parseObject(new String(meta.getMetaBody()), OperationGetStorageServerResponse.class);
+                        log.debug("response status {} from server.", response.getStatus());
+                        if (response.getStatus() == Const.STATUS_OK) {
+                            if (null == response.getMembers()) {
+                                return;
+                            }
+                            Set<Member> members = new HashSet<>(response.getMembers().length);
+                            members.addAll(Arrays.asList(response.getMembers()));
+                            MemberManager.refresh(tracker, members);
+                        } else {
+                            log.error("tracker server {}:{} response status err {}", _bridge.getConnection().getInetAddress().getHostAddress(), _bridge.getConnection().getPort(), response.getStatus());
+                            throw new IllegalStateException("STATUS_BAD_SECRET");
+                        }
                     }
                 });
 
