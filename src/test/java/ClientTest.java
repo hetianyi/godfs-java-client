@@ -5,7 +5,7 @@ import org.junit.Test;
 
 public class ClientTest {
     @Test
-    public void test() {
+    public void test() throws InterruptedException {
         ClientConfigurationBean configuration = new ClientConfigurationBean();
         configuration.setSecret("OASAD834jA97AAQE761==");
 
@@ -17,5 +17,6 @@ public class ClientTest {
 
         GoDFSClient client = new GoDFSClient(configuration);
         client.start();
+        Thread.sleep(100000);
     }
 }

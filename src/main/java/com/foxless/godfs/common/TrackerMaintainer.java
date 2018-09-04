@@ -54,6 +54,7 @@ public class TrackerMaintainer implements Runnable {
             Bridge bridge = null;
             boolean broken = false;
             try {
+                log.debug("synchronize storage servers.");
                 Bridge _bridge = pool.getBridge(endPoint);
                 bridge = _bridge;
                 OperationGetStorageServerRequest validateMeta = new OperationGetStorageServerRequest();
@@ -69,7 +70,6 @@ public class TrackerMaintainer implements Runnable {
                         if (null == response.getMembers()) {
                             return;
                         }
-                        log.info("tracker server response status ok: {}:{}", _bridge.getConnection().getInetAddress().getHostAddress(), _bridge.getConnection().getPort());
                         Set<Member> members = new HashSet<>(response.getMembers().length);
                         members.addAll(Arrays.asList(response.getMembers()));
                         MemberManager.refresh(tracker, members);

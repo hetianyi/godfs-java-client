@@ -14,9 +14,9 @@ public class MemberManager {
     private static Map<Tracker, Set<Member>> managedMembers = new HashMap<Tracker, Set<Member>>();
 
     public static void refresh(Tracker tracker, Set<Member> members) {
-        if (null == members || members.isEmpty()) {
+        if (null != members && !members.isEmpty()) {
             synchronized (managedMembers) {
-                log.debug("add members: {} of tracker: {}:{}", JSON.toJSONString(members), tracker.getHost(), tracker.getPort());
+                log.debug("refresh members: {} of tracker: {}:{}", JSON.toJSONString(members), tracker.getHost(), tracker.getPort());
                 managedMembers.put(tracker, members);
             }
         }
