@@ -14,10 +14,9 @@ public class Tracker {
     private int port = 1022;
 
     private boolean online;
+
     /* client和每个tracker的最大连接数 */
-    private int maxConnections;
-
-
+    private int maxConnections = 1;
 
     public String getHost() {
         return host;
@@ -50,4 +49,5 @@ public class Tracker {
     public void setMaxConnections(int maxConnections) {
         this.maxConnections = maxConnections;
     }
+
 }

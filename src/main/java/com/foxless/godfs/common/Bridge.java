@@ -1,16 +1,21 @@
 package com.foxless.godfs.common;
 
+import com.alibaba.fastjson.JSON;
 import com.foxless.godfs.bean.Meta;
+import com.foxless.godfs.bean.meta.OperationValidationRequest;
+import com.foxless.godfs.bean.meta.OperationValidationResponse;
 import com.foxless.godfs.util.Utils;
-import lombok.experimental.var;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
 public class Bridge {
+    private static final Logger log = LoggerFactory.getLogger(Bridge.class);
+
     private Socket connection;
     private String uuid;
     private byte[] buffer = new byte[Const.HeaderSize];
@@ -85,6 +90,34 @@ public class Bridge {
             this.close();
             throw e;
         }
+    }
+
+    public void validateConnection(String secret) throws Exception {
+
+        OperationValidationRequest validateMeta = new OperationValidationRequest();
+        validateMeta.setSecret(secret);
+        validateMeta.setUuid("JAVA-CLIENT-0.1.0");
+
+        this.sendRequest(Const.O_CONNECT, validateMeta, 0, null);
+        this.receiveResponse((meta, ips) -> {
+            if (meta.getError() != null) {
+                throw meta.getError();
+            }
+            OperationValidationResponse response = JSON.parseObject(new String(meta.getMetaBody()), OperationValidationResponse.class);
+            log.debug("validate response status {} from server.", response.getStatus());
+            if (response.getStatus() == Const.STATUS_OK) {
+                log.info("validate success with tracker server: {}:{}", this.connection.getInetAddress().getHostAddress(), this.connection.getPort());
+            } else if (response.getStatus() == Const.STATUS_BAD_SECRET) {
+                log.error("validate failed with tracker server: {}:{} due to: {}", this.connection.getInetAddress().getHostAddress(), this.connection.getPort(), "STATUS_BAD_SECRET");
+                throw new IllegalStateException("STATUS_BAD_SECRET");
+            } else if (response.getStatus() == Const.STATUS_INTERNAL_SERVER_ERROR) {
+                log.error("validate failed with tracker server: {}:{} due to: {}", this.connection.getInetAddress().getHostAddress(), this.connection.getPort(), "STATUS_INTERNAL_SERVER_ERROR");
+                throw new IllegalStateException("STATUS_INTERNAL_SERVER_ERROR");
+            } else {
+                log.error("validate failed with tracker server: {}:{} due to: {}", this.connection.getInetAddress().getHostAddress(), this.connection.getPort(), response.getStatus());
+                throw new IllegalStateException("server response unknown status code: " + response.getStatus());
+            }
+        });
     }
 
 

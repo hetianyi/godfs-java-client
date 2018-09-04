@@ -1,11 +1,17 @@
 package com.foxless.godfs.common;
 
-import lombok.experimental.var;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class Const {
+
+    public static final int STATUS_OK = 0;
+    public static final int STATUS_BAD_SECRET = 1;
+    public static final int STATUS_OPERATION_NOT_SUPPORT = 2;
+    public static final int STATUS_INTERNAL_SERVER_ERROR = 3;
+    public static final int STATUS_NOT_FOUND = 4;
+
+
     public static final int O_CONNECT = 1;
     public static final int O_RESPONSE = 2;
 

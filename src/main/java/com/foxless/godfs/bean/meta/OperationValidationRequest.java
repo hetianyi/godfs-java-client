@@ -9,7 +9,10 @@ public class OperationValidationRequest {
     }
 
     public void setSecret(String secret) {
-        this.secret = secret;
+        if (null == secret) {
+            secret = "";
+        }
+        this.secret = secret.trim();
     }
 
     public String getUuid() {

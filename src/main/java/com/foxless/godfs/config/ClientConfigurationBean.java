@@ -20,10 +20,13 @@ public class ClientConfigurationBean implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(ClientConfigurationBean.class);
 
     private static final long serialVersionUID = 1793671443182588930L;
+
     /**
      * tracker服务器列表
      */
     private List<Tracker> trackers;
+
+    private String secret = "";
 
     public synchronized void addTracker(Tracker tracker) {
         if (null == tracker) {
@@ -42,5 +45,13 @@ public class ClientConfigurationBean implements Serializable {
 
     public void setTrackers(List<Tracker> trackers) {
         this.trackers = trackers;
+    }
+
+    public String getSecret() {
+        return secret;
+    }
+
+    public void setSecret(String secret) {
+        this.secret = secret;
     }
 }

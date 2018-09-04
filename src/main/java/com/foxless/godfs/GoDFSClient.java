@@ -1,6 +1,9 @@
 package com.foxless.godfs;
 
 import com.alibaba.fastjson.JSON;
+import com.foxless.godfs.common.ConnectionPool;
+import com.foxless.godfs.common.IPool;
+import com.foxless.godfs.common.TrackerMaintainer;
 import com.foxless.godfs.config.ClientConfigurationBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +24,10 @@ public class GoDFSClient {
 
     public void start() {
         log.debug("start client");
-
+        IPool pool = new ConnectionPool();
+        pool.initPool(configuration);
+        TrackerMaintainer maintainer = new TrackerMaintainer(pool, configuration);
+        new Thread(maintainer).start();
     }
 
 
