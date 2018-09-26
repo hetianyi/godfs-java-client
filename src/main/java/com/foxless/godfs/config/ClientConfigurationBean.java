@@ -14,6 +14,7 @@ import java.util.List;
  * @author hetianyi
  * @version 0.1.0
  * @date 2018/09/02
+ * @version 1.0
  */
 public class ClientConfigurationBean implements Serializable {
 

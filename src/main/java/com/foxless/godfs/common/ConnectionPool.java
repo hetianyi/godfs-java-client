@@ -10,10 +10,18 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+/**
+ * connection pool.
+ * it will keeps and manage several connections with each storage.
+ * @author hehety
+ * @sine 1.0
+ * @date 2018/09/26
+ * @version 1.0
+ */
 // TODO expire connection
 public class ConnectionPool implements IPool {
-    private static final Logger log = LoggerFactory.getLogger(ConnectionPool.class);
 
+    private static final Logger log = LoggerFactory.getLogger(ConnectionPool.class);
     // connections for each endpoint.
     private final Map<String, LinkedList<Bridge>> conns = new HashMap<String, LinkedList<Bridge>>();
     // log max connections for each endpoint.

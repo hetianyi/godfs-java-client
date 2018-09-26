@@ -1,9 +1,9 @@
 package com.foxless.godfs.common;
 
-import com.alibaba.fastjson.JSON;
 import com.foxless.godfs.bean.Meta;
+import com.foxless.godfs.bean.Tracker;
 import com.foxless.godfs.bean.meta.OperationValidationRequest;
-import com.foxless.godfs.bean.meta.OperationValidationResponse;
+import com.foxless.godfs.handler.ValidateConnectionHandler;
 import com.foxless.godfs.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +13,17 @@ import java.io.InputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
+/**
+ * connection manager as a bridge.
+ * manage data transfer and connection validation.
+ *
+ * @author hehety
+ * @sine 1.0
+ * @date 2018/09/26
+ * @version 1.0
+ */
 public class Bridge {
+
     private static final Logger log = LoggerFactory.getLogger(Bridge.class);
 
     private Socket connection;
@@ -80,12 +90,14 @@ public class Bridge {
      * @param responseHandler the handler for this response
      * @throws Exception if there is something error occurs, the connection will be close.
      */
-    public synchronized void receiveResponse(IResponseHandler responseHandler) throws Exception {
+    public synchronized Object receiveResponse(Tracker tracker, Class<? extends IResponseHandler> responseHandler) throws Exception {
         try {
             Meta meta = readHeadMeta();
             if (null != responseHandler) {
-                responseHandler.handle(meta, this.connection.getInputStream());
+                IResponseHandler handler = Handlers.getHandler(responseHandler);
+                return handler.handle(this, tracker, meta, this.connection.getInputStream());
             }
+            return null;
         } catch (Exception e) {
             this.close();
             throw e;
@@ -99,28 +111,7 @@ public class Bridge {
         validateMeta.setUuid("JAVA-CLIENT-0.1.0");
 
         this.sendRequest(Const.O_CONNECT, validateMeta, 0, null);
-        this.receiveResponse(new IResponseHandler() {
-            @Override
-            public void handle(Meta meta, InputStream ips) throws Exception {
-                if (meta.getError() != null) {
-                    throw meta.getError();
-                }
-                OperationValidationResponse response = JSON.parseObject(new String(meta.getMetaBody()), OperationValidationResponse.class);
-                log.debug("validate response status {} from server.", response.getStatus());
-                if (response.getStatus() == Const.STATUS_OK) {
-                    log.info("validate success with tracker server: {}:{}", connection.getInetAddress().getHostAddress(), connection.getPort());
-                } else if (response.getStatus() == Const.STATUS_BAD_SECRET) {
-                    log.error("validate failed with tracker server: {}:{} due to: {}", connection.getInetAddress().getHostAddress(), connection.getPort(), "STATUS_BAD_SECRET");
-                    throw new IllegalStateException("STATUS_BAD_SECRET");
-                } else if (response.getStatus() == Const.STATUS_INTERNAL_SERVER_ERROR) {
-                    log.error("validate failed with tracker server: {}:{} due to: {}", connection.getInetAddress().getHostAddress(), connection.getPort(), "STATUS_INTERNAL_SERVER_ERROR");
-                    throw new IllegalStateException("STATUS_INTERNAL_SERVER_ERROR");
-                } else {
-                    log.error("validate failed with tracker server: {}:{} due to: {}", connection.getInetAddress().getHostAddress(), connection.getPort(), response.getStatus());
-                    throw new IllegalStateException("server response unknown status code: " + response.getStatus());
-                }
-            }
-        });
+        this.receiveResponse(null, ValidateConnectionHandler.class);
     }
 
 

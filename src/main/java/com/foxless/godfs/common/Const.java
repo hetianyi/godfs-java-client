@@ -1,5 +1,7 @@
 package com.foxless.godfs.common;
 
+import com.foxless.godfs.config.ClientConfigurationBean;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +28,13 @@ public class Const {
 
     public static final int HeaderSize = 18;
 
+    public static final String PATH_REGEX = "([0-9a-zA-Z_]{1,10})/([0-9a-zA-Z_]{1,10})/([MS])/([0-9a-fA-F]{32})";
+    public static final String MD5_REGEX = "[0-9a-fA-F]{32}";
+
+
+
+    private static IPool pool;
+
     private static Map<Integer, byte[]> operationHeadMap = new HashMap<Integer, byte[]>(10);
 
     static {
@@ -44,9 +53,11 @@ public class Const {
     public static boolean containsOperationCode(int operation) {
         return operationHeadMap.containsKey(operation);
     }
+
     public static byte[] getOperationHeadBytes(int operation) {
         return operationHeadMap.get(operation);
     }
+
     public static int getOperationByHeadBytes(byte[] op) {
         for (Map.Entry<Integer, byte[]> entry : operationHeadMap.entrySet()) {
             if (entry.getValue().equals(op)) {
@@ -56,4 +67,19 @@ public class Const {
         return 0;
     }
 
+    /**
+     * initial connection pool.
+     * @param configuration
+     */
+    public static synchronized void initPool(ClientConfigurationBean configuration) {
+        if (null != pool) {
+            return;
+        }
+        pool = new ConnectionPool();
+        pool.initPool(configuration);
+    }
+
+    public static IPool getPool() {
+        return pool;
+    }
 }
