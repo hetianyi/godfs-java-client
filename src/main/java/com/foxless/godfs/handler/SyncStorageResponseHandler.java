@@ -1,6 +1,7 @@
 package com.foxless.godfs.handler;
 
 import com.alibaba.fastjson.JSON;
+import com.foxless.godfs.bean.ExpireMember;
 import com.foxless.godfs.bean.Member;
 import com.foxless.godfs.bean.Meta;
 import com.foxless.godfs.bean.Tracker;
@@ -27,8 +28,10 @@ public class SyncStorageResponseHandler implements IResponseHandler {
         log.debug("response status {} from server.", response.getStatus());
         if (response.getStatus() == Const.STATUS_OK) {
             if (null != response.getMembers()) {
-                Set<Member> members = new HashSet<>(response.getMembers().length);
-                members.addAll(Arrays.asList(response.getMembers()));
+                Set<ExpireMember> members = new HashSet<ExpireMember>(response.getMembers().length);
+                for (Member m : response.getMembers()) {
+                    members.add(new ExpireMember().from(m));
+                }
                 MemberManager.refresh(tracker, members);
             }
         } else {

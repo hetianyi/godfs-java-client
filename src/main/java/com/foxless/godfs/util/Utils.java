@@ -5,8 +5,6 @@ import com.foxless.godfs.bean.ExpireMember;
 import com.foxless.godfs.bean.Meta;
 import com.foxless.godfs.common.Const;
 
-import java.io.InputStream;
-
 public class Utils {
 
     public static String getStorageServerUID(ExpireMember expireMember) {

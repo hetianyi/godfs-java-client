@@ -4,11 +4,15 @@ import com.foxless.godfs.api.GodfsApiClient;
 import com.foxless.godfs.bean.File;
 import com.foxless.godfs.bean.Tracker;
 import com.foxless.godfs.config.ClientConfigurationBean;
+import org.junit.Before;
 import org.junit.Test;
 
 public class ClientTest {
-    @Test
-    public void test() throws Exception {
+
+    private GoDFSClient client;
+
+    @Before
+    public void prepare() {
         ClientConfigurationBean configuration = new ClientConfigurationBean();
         configuration.setSecret("OASAD834jA97AAQE761==");
 
@@ -18,10 +22,13 @@ public class ClientTest {
         tracker.setMaxConnections(5);
         configuration.addTracker(tracker);
 
-        GoDFSClient client = new GoDFSClient(configuration);
+        client = new GoDFSClient(configuration);
         client.start();
-        Thread.sleep(1000);
+    }
 
+
+    @Test
+    public void testQueryFile() throws Exception {
         final GodfsApiClient apiClient = client.getGodfsApiClient();
         for (int i = 0; i < 10; i++) {
             new Thread(new Runnable() {
@@ -43,4 +50,13 @@ public class ClientTest {
         }
         Thread.sleep(5000);
     }
+
+
+    @Test
+    public void testUploadFile() {
+        final GodfsApiClient apiClient = client.getGodfsApiClient();
+        apiClient.upload()
+    }
+
+
 }

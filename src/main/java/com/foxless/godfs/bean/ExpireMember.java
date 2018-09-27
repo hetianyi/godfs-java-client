@@ -9,13 +9,16 @@ public class ExpireMember {
     private int port;
     private boolean readonly;
     private Date expireTime;
+    private EndPoint endPoint;
 
-    public void from(Member member) {
+    public ExpireMember from(Member member) {
         this.addr = member.getAddr();
         this.instance_id = member.getInstance_id();
         this.group = member.getGroup();
         this.port = member.getPort();
         this.readonly = member.isReadonly();
+        this.endPoint = EndPoint.fromMember(member);
+        return this;
     }
 
     public String getAddr() {
@@ -64,5 +67,16 @@ public class ExpireMember {
 
     public void setExpireTime(Date expireTime) {
         this.expireTime = expireTime;
+    }
+
+    public EndPoint getEndPoint() {
+        return endPoint;
+    }
+
+    public boolean isExpired(Date now) {
+        if (this.expireTime.getTime() < now.getTime()) {
+            return true;
+        }
+        return false;
     }
 }

@@ -1,6 +1,10 @@
 package com.foxless.godfs.api;
 
 import com.foxless.godfs.bean.File;
+import com.foxless.godfs.bean.MonitorProgressBean;
+import com.foxless.godfs.common.IMonitor;
+
+import java.io.InputStream;
 
 /**
  * godfs api client.
@@ -18,4 +22,6 @@ public interface GodfsApiClient {
      * @throws Exception
      */
     File query(String pathOrMd5) throws Exception;
+
+    String upload(InputStream ips, long fileSize, String group, IMonitor<MonitorProgressBean> monitor) throws Exception;
 }

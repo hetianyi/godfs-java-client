@@ -38,6 +38,14 @@ public class TrackerMaintainer implements Runnable {
                 timer.scheduleAtFixedRate(new TimerSyncMemberTask(tracker), 0, 30000);
             }
         }
+        // start storage member expire work
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                MemberManager.expireMember();
+            }
+        }, 5000, 30000*3);
     }
 
 
