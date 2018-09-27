@@ -26,6 +26,7 @@ public class Bridge {
 
     private static final Logger log = LoggerFactory.getLogger(Bridge.class);
 
+    private Long index;
     private Socket connection;
     private String uuid;
     private byte[] buffer = new byte[Const.HeaderSize];
@@ -33,8 +34,9 @@ public class Bridge {
     public Bridge() {
     }
 
-    public Bridge(Socket connection) {
+    public Bridge(Socket connection, long index) {
         this.connection = connection;
+        this.index = index;
     }
 
     public void close() {
@@ -218,4 +220,11 @@ public class Bridge {
         this.uuid = uuid;
     }
 
+    public Long getIndex() {
+        return index;
+    }
+
+    public void setIndex(Long index) {
+        this.index = index;
+    }
 }

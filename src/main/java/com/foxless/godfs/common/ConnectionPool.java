@@ -2,6 +2,7 @@ package com.foxless.godfs.common;
 
 import com.foxless.godfs.bean.EndPoint;
 import com.foxless.godfs.config.ClientConfigurationBean;
+import com.foxless.godfs.except.ExhaustedConnectionPoolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +33,7 @@ public class ConnectionPool implements IPool {
     private final Map<String, Object> connLock = new HashMap<String, Object>();
 
     private boolean init = false;
+    private long connIndex = 0;
 
     private ClientConfigurationBean clientConfigurationBean;
 
@@ -77,7 +79,9 @@ public class ConnectionPool implements IPool {
         synchronized (lock) {
             LinkedList<Bridge> connList = conns.get(endPoint.getUuid());
             if (connList.size() > 0) {
-                return connList.remove(0);
+                Bridge bridge = connList.remove(0);
+                log.debug("using connection index: {}", bridge.getIndex());
+                return bridge;
             }
             log.debug("no connection bridge available for endPoint: {}:{}, create a new connection.", endPoint.getHost(), endPoint.getPort());
             return createNewBridge(endPoint);
@@ -86,12 +90,17 @@ public class ConnectionPool implements IPool {
 
 
     private Bridge createNewBridge(EndPoint endPoint) throws Exception {
+        Integer maxConns = connConfig.get(endPoint.getUuid());
+        if (increaseActiveConnection(endPoint, 0) >= maxConns) {
+            throw new ExhaustedConnectionPoolException("cannot get connection from pool, pool is full!");
+        }
         log.debug("create connection bridge for endPoint: {}:{}", endPoint.getHost(), endPoint.getPort());
         Socket s = new Socket(endPoint.getHost(), endPoint.getPort());
-        Bridge bridge = new Bridge(s);
+        Bridge bridge = new Bridge(s, getCurrentIndex());
         try {
             bridge.validateConnection(clientConfigurationBean.getSecret());
             increaseActiveConnection(endPoint, 1);
+            log.debug("using connection index: {}", bridge.getIndex());
             return bridge;
         } catch (Exception e) {
             bridge.close();
@@ -99,6 +108,7 @@ public class ConnectionPool implements IPool {
         }
     }
 
+    // return a healthy connection
     @Override
     public void returnBridge(EndPoint endPoint, Bridge bridge) {
         if (null == bridge) {
@@ -112,6 +122,7 @@ public class ConnectionPool implements IPool {
         }
     }
 
+    // return an unhealthy connection and mark -1 to endpoint connection count
     @Override
     public void returnBrokenBridge(EndPoint endPoint, Bridge bridge) {
         if (null == bridge) {
@@ -128,5 +139,10 @@ public class ConnectionPool implements IPool {
         current += value;
         currentConns.put(endPoint.getUuid(), current);
         return current;
+    }
+
+
+    private synchronized long getCurrentIndex() {
+        return ++connIndex;
     }
 }

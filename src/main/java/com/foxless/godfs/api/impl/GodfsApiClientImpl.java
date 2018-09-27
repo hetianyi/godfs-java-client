@@ -76,7 +76,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                 } catch (Exception e) {
                     broken = true;
                     log.error("error query file from tracker server [{}:{}] due to: {}", tracker.getHost(), tracker.getPort(), e.getMessage());
-                    //e.printStackTrace();
+                    throw e;
                 } finally {
                     if (broken) {
                         Const.getPool().returnBrokenBridge(endPoint, bridge);
