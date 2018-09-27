@@ -1,11 +1,16 @@
 import com.alibaba.fastjson.JSON;
 import com.foxless.godfs.GoDFSClient;
 import com.foxless.godfs.api.GodfsApiClient;
-import com.foxless.godfs.bean.File;
+import com.foxless.godfs.bean.FileEntity;
 import com.foxless.godfs.bean.Tracker;
+import com.foxless.godfs.common.UploadProgressMonitor;
 import com.foxless.godfs.config.ClientConfigurationBean;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 
 public class ClientTest {
 
@@ -36,7 +41,7 @@ public class ClientTest {
                 public void run() {
 
                     for (int k = 0; k < 100; k++) {
-                        File file = null;
+                        FileEntity file = null;
                         try {
                             file = apiClient.query("G01/110/M/c595755240f35f167887a6fee4d527ca");
                             System.out.println(JSON.toJSONString(file));
@@ -53,9 +58,13 @@ public class ClientTest {
 
 
     @Test
-    public void testUploadFile() {
+    public void testUploadFile() throws Exception {
+        Thread.sleep(5000);
         final GodfsApiClient apiClient = client.getGodfsApiClient();
-        apiClient.upload()
+        File file = new File("E:/WorkSpace2018/godfs/dev_tool/mingw-w64-install.exe");
+        InputStream ips = new FileInputStream(file);
+        String path = apiClient.upload(ips, file.length(), null, new UploadProgressMonitor());
+        System.out.println(path);
     }
 
 

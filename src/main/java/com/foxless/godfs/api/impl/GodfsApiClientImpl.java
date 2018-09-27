@@ -2,13 +2,12 @@ package com.foxless.godfs.api.impl;
 
 import com.foxless.godfs.api.GodfsApiClient;
 import com.foxless.godfs.bean.*;
-import com.foxless.godfs.bean.meta.OperationGetStorageServerRequest;
 import com.foxless.godfs.bean.meta.OperationQueryFileRequest;
 import com.foxless.godfs.bean.meta.OperationUploadFileRequest;
 import com.foxless.godfs.common.*;
 import com.foxless.godfs.config.ClientConfigurationBean;
 import com.foxless.godfs.handler.QueryFileResponseHandler;
-import com.foxless.godfs.handler.SyncStorageResponseHandler;
+import com.foxless.godfs.handler.UploadResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +45,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
     }
 
     @Override
-    public File query(String pathOrMd5) throws Exception {
+    public FileEntity query(String pathOrMd5) throws Exception {
         if (null == pathOrMd5 || "".equals(pathOrMd5)) {
             log.warn("query parameter cannot be null or empty");
             return null;
@@ -67,14 +66,14 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                 Bridge bridge = null;
                 boolean broken = false;
                 try {
-                    log.debug("query file '{}' from tracker server: {}:{}", pathOrMd5, tracker.getHost(), tracker.getPort());
+                    log.debug("query fileEntity '{}' from tracker server: {}:{}", pathOrMd5, tracker.getHost(), tracker.getPort());
                     bridge = Const.getPool().getBridge(endPoint);
                     OperationQueryFileRequest queryFileRequest = new OperationQueryFileRequest();
                     queryFileRequest.setMd5(pathOrMd5);
                     bridge.sendRequest(Const.O_QUERY_FILE, queryFileRequest, 0, null);
-                    File file = (File) bridge.receiveResponse(tracker, QueryFileResponseHandler.class);
-                    if (null != file) {
-                        return file;
+                    FileEntity fileEntity = (FileEntity) bridge.receiveResponse(tracker, QueryFileResponseHandler.class);
+                    if (null != fileEntity) {
+                        return fileEntity;
                     }
                     continue;
                 } catch (Exception e) {
@@ -129,21 +128,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
         UploadStreamWriter writer = new UploadStreamWriter(ips, monitor);
 
         connBridge.sendRequest(Const.O_UPLOAD, uploadFileRequest, 0, writer);
-        //TODO to be continue here
-        connBridge.receiveResponse(null, SyncStorageResponseHandler.class);
-
-        byte[] buffer = new byte[10240];
-        int len;
-        long finish = 0l;
-        while((len = ips.read(buffer)) != -1) {
-            if (null != progressBean) {
-                finish += len;
-                progressBean.setFinish(finish);
-                monitor.monitor(progressBean);
-            }
-            // write
-        }
-        return null;
+        return (String) connBridge.receiveResponse(null, UploadResponseHandler.class);
     }
 
     private final ClientConfigurationBean getConfiguration() {

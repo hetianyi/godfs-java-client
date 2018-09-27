@@ -10,7 +10,7 @@ import java.util.List;
  * @date 2018/09/26
  * @version 1.0
  */
-public class File {
+public class FileEntity {
 
     private long id;
     private String md5;

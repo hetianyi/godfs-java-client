@@ -1,11 +1,11 @@
 package com.foxless.godfs.bean.meta;
 
-import com.foxless.godfs.bean.File;
+import com.foxless.godfs.bean.FileEntity;
 
 public class OperationQueryFileResponse {
     private int status;
     private boolean exist;
-    private File file;
+    private FileEntity fileEntity;
 
     public int getStatus() {
         return status;
@@ -23,11 +23,11 @@ public class OperationQueryFileResponse {
         this.exist = exist;
     }
 
-    public File getFile() {
-        return file;
+    public FileEntity getFileEntity() {
+        return fileEntity;
     }
 
-    public void setFile(File file) {
-        this.file = file;
+    public void setFileEntity(FileEntity fileEntity) {
+        this.fileEntity = fileEntity;
     }
 }

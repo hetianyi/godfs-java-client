@@ -13,15 +13,17 @@ public class EndPoint {
 
 
     private EndPoint(Tracker tracker) {
-        this.uuid = tracker.getHost() + tracker.getPort();
+        this.uuid = getUUID(tracker);
         this.host = tracker.getHost();
         this.port = tracker.getPort();
     }
     private EndPoint(Member member) {
-        this.uuid = member.getAddr() + member.getPort();
+        this.uuid = getUUID(member);
+        this.host = member.getAddr();
+        this.port = member.getPort();
     }
     private EndPoint(ExpireMember expireMember) {
-        this.uuid = expireMember.getAddr() + expireMember.getPort();
+        this.uuid = getUUID(expireMember);
     }
 
     public static EndPoint fromTracker(Tracker tracker) {
@@ -60,13 +62,13 @@ public class EndPoint {
             return null;
         }
         if (instance instanceof Tracker) {
-            return ((Tracker) instance).getHost() + ((Tracker) instance).getPort();
+            return ((Tracker) instance).getHost() + ":" + ((Tracker) instance).getPort();
         }
         if (instance instanceof Member) {
-            return ((Member) instance).getAddr() + ((Member) instance).getPort();
+            return ((Member) instance).getAddr() + ":" + ((Member) instance).getPort();
         }
         if (instance instanceof ExpireMember) {
-            return ((ExpireMember) instance).getAddr() + ((ExpireMember) instance).getPort();
+            return ((ExpireMember) instance).getAddr() + ":" + ((ExpireMember) instance).getPort();
         }
         return null;
     }

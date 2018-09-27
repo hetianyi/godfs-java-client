@@ -45,7 +45,7 @@ public class TrackerMaintainer implements Runnable {
             public void run() {
                 MemberManager.expireMember();
             }
-        }, 5000, 30000*3);
+        }, 30000*3 + 5000, 30000*3);
     }
 
 

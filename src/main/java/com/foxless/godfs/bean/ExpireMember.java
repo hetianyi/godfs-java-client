@@ -1,5 +1,7 @@
 package com.foxless.godfs.bean;
 
+import com.foxless.godfs.common.Const;
+
 import java.util.Date;
 
 public class ExpireMember {
@@ -11,6 +13,10 @@ public class ExpireMember {
     private Date expireTime;
     private EndPoint endPoint;
 
+    public ExpireMember() {
+        this.expireTime = new Date();
+    }
+
     public ExpireMember from(Member member) {
         this.addr = member.getAddr();
         this.instance_id = member.getInstance_id();
@@ -18,6 +24,7 @@ public class ExpireMember {
         this.port = member.getPort();
         this.readonly = member.isReadonly();
         this.endPoint = EndPoint.fromMember(member);
+        Const.getPool().initEndPoint(this.endPoint, Const.MAX_CONN_EACH_STORAGE_SERVER);
         return this;
     }
 

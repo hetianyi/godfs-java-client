@@ -3,7 +3,6 @@ package com.foxless.godfs.common;
 import com.alibaba.fastjson.JSON;
 import com.foxless.godfs.bean.EndPoint;
 import com.foxless.godfs.bean.ExpireMember;
-import com.foxless.godfs.bean.Member;
 import com.foxless.godfs.bean.Tracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -141,7 +140,7 @@ public class MemberManager {
                     continue;
                 }
                 for (ExpireMember m : set) {
-                    if (Objects.equals(group, m.getGroup()) && m.isReadonly() == readonly) {
+                    if (null == group || Objects.equals(group, m.getGroup()) && m.isReadonly() == readonly) {
                         allMember.add(m);
                     }
                 }
@@ -168,6 +167,7 @@ public class MemberManager {
     }
 
     public static void expireMember() {
+        log.debug("expire members........................");
         Date now = new Date();
         synchronized (managedMembers) {
             Collection<Set<ExpireMember>> collections = managedMembers.values();
