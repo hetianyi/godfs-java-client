@@ -22,15 +22,10 @@ public class UploadStreamWriter implements IWriter {
         int len;
         long finish = 0l;
         while((len = ips.read(buffer)) != -1) {
-            if (null != progressBean) {
+            ops.write(buffer, 0, len);
+            if (null != monitor) {
                 finish += len;
                 progressBean.setFinish(finish);
-                monitor.monitor(progressBean);
-            }
-            ops.write(buffer, 0, len);
-            finish += len;
-            progressBean.setFinish(finish);
-            if (null != monitor) {
                 monitor.monitor(progressBean);
             }
         }

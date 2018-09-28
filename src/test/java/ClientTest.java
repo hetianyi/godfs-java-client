@@ -61,11 +61,25 @@ public class ClientTest {
     public void testUploadFile() throws Exception {
         Thread.sleep(5000);
         final GodfsApiClient apiClient = client.getGodfsApiClient();
-        File file = new File("E:/WorkSpace2018/godfs/dev_tool/mingw-w64-install.exe");
+        File file = new File("D:/123.txt");
         InputStream ips = new FileInputStream(file);
         String path = apiClient.upload(ips, file.length(), null, new UploadProgressMonitor());
         System.out.println(path);
     }
+    @Test
+    public void testUploadLocalFile() throws Exception {
+        Thread.sleep(3000);
+        final GodfsApiClient apiClient = client.getGodfsApiClient();
+        File file = new File("E:/CBIMXiongAnManageTools.rar");
+        String path = apiClient.upload(file, null, new UploadProgressMonitor());
+        System.out.println(path);
+    }
+
+    @Test
+    public void testMembers() throws Exception {
+        Thread.sleep(5000000);
+    }
+
 
 
 }

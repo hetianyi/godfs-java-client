@@ -28,7 +28,6 @@ public class MemberManager {
     public static void refresh(Tracker tracker, Set<ExpireMember> members) {
         if (null != members && !members.isEmpty()) {
             synchronized (managedMembers) {
-                log.debug("refresh members: {} of tracker: {}:{}", JSON.toJSONString(members), tracker.getHost(), tracker.getPort());
                 Set<ExpireMember> ret = managedMembers.get(tracker);
                 if (null == ret) {
                     ret = new HashSet<>(5);
@@ -41,10 +40,12 @@ public class MemberManager {
                         if (m1.getEndPoint() == m2.getEndPoint()) {
                             hit = true;
                             m2.setExpireTime(new Date(System.currentTimeMillis() + 30000*3));
+                            log.debug("renewal storage members: {}:{} of tracker: {}:{}", m1.getAddr(), m1.getPort(), tracker.getHost(), tracker.getPort());
                             break;
                         }
                     }
                     if (!hit) {
+                        log.debug("add storage members: {}:{} of tracker: {}:{}", m1.getAddr(), m1.getPort(), tracker.getHost(), tracker.getPort());
                         ret.add(m1);
                     }
                 }
@@ -182,6 +183,7 @@ public class MemberManager {
                 for (Iterator<ExpireMember> it1 = set.iterator(); it1.hasNext();) {
                     ExpireMember em = it1.next();
                     if (em.isExpired(now)) {
+                        log.info("remove member {}:{}", em.getAddr(), em.getPort());
                         it1.remove();
                     }
                 }

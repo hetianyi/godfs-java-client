@@ -4,6 +4,7 @@ import com.foxless.godfs.bean.FileEntity;
 import com.foxless.godfs.bean.MonitorProgressBean;
 import com.foxless.godfs.common.IMonitor;
 
+import java.io.File;
 import java.io.InputStream;
 
 /**
@@ -23,5 +24,26 @@ public interface GodfsApiClient {
      */
     FileEntity query(String pathOrMd5) throws Exception;
 
+    /**
+     * upload file in stream mode.
+     * @param ips
+     * @param fileSize
+     * @param group
+     * @param monitor
+     * @return
+     * @throws Exception
+     */
     String upload(InputStream ips, long fileSize, String group, IMonitor<MonitorProgressBean> monitor) throws Exception;
+
+    /**
+     * upload local file.
+     * @param file
+     * @param group
+     * @param monitor
+     * @return
+     * @throws Exception
+     */
+    String upload(File file, String group, IMonitor<MonitorProgressBean> monitor) throws Exception;
+
+    void download(String path) throws Exception;
 }

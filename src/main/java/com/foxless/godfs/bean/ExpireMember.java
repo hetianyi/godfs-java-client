@@ -14,7 +14,7 @@ public class ExpireMember {
     private EndPoint endPoint;
 
     public ExpireMember() {
-        this.expireTime = new Date();
+        this.expireTime = new Date(System.currentTimeMillis() + 30000);
     }
 
     public ExpireMember from(Member member) {

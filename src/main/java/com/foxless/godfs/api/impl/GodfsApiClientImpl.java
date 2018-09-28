@@ -11,6 +11,8 @@ import com.foxless.godfs.handler.UploadResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Objects;
@@ -127,8 +129,33 @@ public class GodfsApiClientImpl implements GodfsApiClient {
         uploadFileRequest.setMd5("");
         UploadStreamWriter writer = new UploadStreamWriter(ips, monitor);
 
-        connBridge.sendRequest(Const.O_UPLOAD, uploadFileRequest, 0, writer);
-        return (String) connBridge.receiveResponse(null, UploadResponseHandler.class);
+        boolean broken = false;
+        try {
+            connBridge.sendRequest(Const.O_UPLOAD, uploadFileRequest, fileSize, writer);
+            return (String) connBridge.receiveResponse(null, UploadResponseHandler.class);
+        } catch (Exception e) {
+            broken = true;
+            throw e;
+        } finally {
+            if (broken) {
+                Const.getPool().returnBrokenBridge(member.getEndPoint(), connBridge);
+            } else {
+                Const.getPool().returnBridge(member.getEndPoint(), connBridge);
+            }
+        }
+    }
+
+    @Override
+    public String upload(File file, String group, IMonitor<MonitorProgressBean> monitor) throws Exception {
+        InputStream ips = null;
+        try {
+            ips = new FileInputStream(file);
+            return upload(ips, file.length(), group, monitor);
+        } finally {
+            if (null != ips) {
+                ips.close();
+            }
+        }
     }
 
     private final ClientConfigurationBean getConfiguration() {
