@@ -37,14 +37,18 @@ public class DownloadFileResponseHandler implements IResponseHandler {
             if (bodyLength < Const.BUFFER_SIZE) {
                 nextRead = (int) left;
                 while(left > 0 && (len = ips.read(buffer, 0, nextRead)) != -1) {
-                    byteReceiver.read(buffer, 0, len);
+                    if (null != byteReceiver) {
+                        byteReceiver.read(buffer, 0, len);
+                    }
                     finish += len;
                     left = bodyLength - finish;
                     nextRead = (int) left;
                 }
             } else {
                 while(left > 0 && (len = ips.read(buffer, 0, nextRead)) != -1) {
-                    byteReceiver.read(buffer, 0, len);
+                    if (null != byteReceiver) {
+                        byteReceiver.read(buffer, 0, len);
+                    }
                     finish += len;
                     left = bodyLength - finish;
                     if (left < Const.BUFFER_SIZE) {
@@ -52,7 +56,10 @@ public class DownloadFileResponseHandler implements IResponseHandler {
                     }
                 }
             }
-            byteReceiver.finish();
+
+            if (null != byteReceiver) {
+                byteReceiver.finish();
+            }
             return null;
         } else {
             log.error("storage server {}:{} response err status {}", bridge.getConnection().getInetAddress().getHostAddress(), bridge.getConnection().getPort(), response.getStatus());

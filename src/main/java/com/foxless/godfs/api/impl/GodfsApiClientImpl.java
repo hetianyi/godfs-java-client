@@ -229,6 +229,11 @@ public class GodfsApiClientImpl implements GodfsApiClient {
         }
     }
 
+    @Override
+    public void download(String path, IReader byteReceiver) throws Exception {
+        this.download(path, 0, -1, byteReceiver);
+    }
+
     private final ClientConfigurationBean getConfiguration() {
         return configuration;
     }

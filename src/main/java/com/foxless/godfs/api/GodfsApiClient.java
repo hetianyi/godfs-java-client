@@ -50,8 +50,15 @@ public interface GodfsApiClient {
      * download file using file path which pattern like 'G01/001/S/&lt;md5&gt;'
      *
      * @param path file path which pattern like 'G01/001/S/&lt;md5&gt;'
+     * @param start download file start position.
+     * @param offset download bytes offset, -1 represents the end of the file.
      * @param byteReceiver byte receiver handling download file bytes.
      * @throws Exception
      */
     void download(String path, long start, long offset, IReader byteReceiver) throws Exception;
+
+    /**
+     * @see #download(String, long, long, IReader)
+     */
+    void download(String path, IReader byteReceiver) throws Exception;
 }
