@@ -6,5 +6,5 @@ import com.foxless.godfs.bean.Tracker;
 import java.io.InputStream;
 
 public interface IResponseHandler {
-    Object handle(Bridge bridge, Tracker tracker, Meta meta, InputStream ips) throws Exception;
+    Object handle(Bridge bridge, Tracker tracker, Meta meta, IReader byteReceiver) throws Exception;
 }

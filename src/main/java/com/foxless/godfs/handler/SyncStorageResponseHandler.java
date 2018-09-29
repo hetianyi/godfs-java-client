@@ -20,7 +20,7 @@ public class SyncStorageResponseHandler implements IResponseHandler {
     private static final Logger log = LoggerFactory.getLogger(SyncStorageResponseHandler.class);
 
     @Override
-    public Object handle(Bridge bridge, Tracker tracker, Meta meta, InputStream ips) throws Exception {
+    public Object handle(Bridge bridge, Tracker tracker, Meta meta, IReader byteReceiver) throws Exception {
         if (meta.getError() != null) {
             throw meta.getError();
         }

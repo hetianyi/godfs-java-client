@@ -3,6 +3,7 @@ package com.foxless.godfs.api;
 import com.foxless.godfs.bean.FileEntity;
 import com.foxless.godfs.bean.MonitorProgressBean;
 import com.foxless.godfs.common.IMonitor;
+import com.foxless.godfs.common.IReader;
 
 import java.io.File;
 import java.io.InputStream;
@@ -45,5 +46,12 @@ public interface GodfsApiClient {
      */
     String upload(File file, String group, IMonitor<MonitorProgressBean> monitor) throws Exception;
 
-    void download(String path) throws Exception;
+    /**
+     * download file using file path which pattern like 'G01/001/S/&lt;md5&gt;'
+     *
+     * @param path file path which pattern like 'G01/001/S/&lt;md5&gt;'
+     * @param byteReceiver byte receiver handling download file bytes.
+     * @throws Exception
+     */
+    void download(String path, long start, long offset, IReader byteReceiver) throws Exception;
 }

@@ -8,5 +8,5 @@ public interface IWriter {
      * @param ops
      * @throws Exception
      */
-    void write(OutputStream ops) throws Exception;
+    void write(OutputStream ops, long length) throws Exception;
 }

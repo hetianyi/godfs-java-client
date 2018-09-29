@@ -17,16 +17,36 @@ public class UploadStreamWriter implements IWriter {
     }
 
     @Override
-    public void write(OutputStream ops) throws Exception {
-        byte[] buffer = new byte[10240];
+    public void write(OutputStream ops, long length) throws Exception {
+        byte[] buffer = new byte[Const.BUFFER_SIZE];
         int len;
         long finish = 0l;
-        while((len = ips.read(buffer)) != -1) {
-            ops.write(buffer, 0, len);
-            if (null != monitor) {
+        long left = length;
+        int nextRead = Const.BUFFER_SIZE;
+        if (length < Const.BUFFER_SIZE) {
+            nextRead = (int) left;
+            while(left > 0 && (len = ips.read(buffer, 0, nextRead)) != -1) {
+                ops.write(buffer, 0, len);
                 finish += len;
-                progressBean.setFinish(finish);
-                monitor.monitor(progressBean);
+                if (null != monitor) {
+                    progressBean.setFinish(finish);
+                    monitor.monitor(progressBean);
+                }
+                left = length - finish;
+                nextRead = (int) left;
+            }
+        } else {
+            while(left > 0 && (len = ips.read(buffer, 0, nextRead)) != -1) {
+                ops.write(buffer, 0, len);
+                finish += len;
+                if (null != monitor) {
+                    progressBean.setFinish(finish);
+                    monitor.monitor(progressBean);
+                }
+                left = length - finish;
+                if (left < Const.BUFFER_SIZE) {
+                    nextRead = (int) left;
+                }
             }
         }
     }

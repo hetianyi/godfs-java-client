@@ -9,5 +9,9 @@ public interface IReader {
      */
     void read(byte[] buffer, int start, int len);
 
+    /**
+     * call when file download finish.
+     * you must close your resource here.
+     */
     void finish();
 }

@@ -70,7 +70,7 @@ public class TrackerMaintainer implements Runnable {
                 OperationGetStorageServerRequest validateMeta = new OperationGetStorageServerRequest();
 
                 bridge.sendRequest(Const.O_SYNC_STORAGE, validateMeta, 0, null);
-                bridge.receiveResponse(tracker, SyncStorageResponseHandler.class);
+                bridge.receiveResponse(tracker, SyncStorageResponseHandler.class, null);
             } catch (Exception e) {
                 broken = true;
                 e.printStackTrace();

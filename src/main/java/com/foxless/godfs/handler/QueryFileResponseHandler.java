@@ -6,18 +6,17 @@ import com.foxless.godfs.bean.Tracker;
 import com.foxless.godfs.bean.meta.OperationQueryFileResponse;
 import com.foxless.godfs.common.Bridge;
 import com.foxless.godfs.common.Const;
+import com.foxless.godfs.common.IReader;
 import com.foxless.godfs.common.IResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.InputStream;
 
 public class QueryFileResponseHandler implements IResponseHandler {
 
     private static final Logger log = LoggerFactory.getLogger(QueryFileResponseHandler.class);
 
     @Override
-    public Object handle(Bridge bridge, Tracker tracker, Meta meta, InputStream ips) throws Exception {
+    public Object handle(Bridge bridge, Tracker tracker, Meta meta, IReader byteReceiver) throws Exception {
         if (meta.getError() != null) {
             throw meta.getError();
         }

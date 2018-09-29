@@ -2,10 +2,12 @@ package com.foxless.godfs.api.impl;
 
 import com.foxless.godfs.api.GodfsApiClient;
 import com.foxless.godfs.bean.*;
+import com.foxless.godfs.bean.meta.OperationDownloadFileRequest;
 import com.foxless.godfs.bean.meta.OperationQueryFileRequest;
 import com.foxless.godfs.bean.meta.OperationUploadFileRequest;
 import com.foxless.godfs.common.*;
 import com.foxless.godfs.config.ClientConfigurationBean;
+import com.foxless.godfs.handler.DownloadFileResponseHandler;
 import com.foxless.godfs.handler.QueryFileResponseHandler;
 import com.foxless.godfs.handler.UploadResponseHandler;
 import org.slf4j.Logger;
@@ -13,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Objects;
@@ -73,7 +76,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                     OperationQueryFileRequest queryFileRequest = new OperationQueryFileRequest();
                     queryFileRequest.setMd5(pathOrMd5);
                     bridge.sendRequest(Const.O_QUERY_FILE, queryFileRequest, 0, null);
-                    FileEntity fileEntity = (FileEntity) bridge.receiveResponse(tracker, QueryFileResponseHandler.class);
+                    FileEntity fileEntity = (FileEntity) bridge.receiveResponse(tracker, QueryFileResponseHandler.class, null);
                     if (null != fileEntity) {
                         return fileEntity;
                     }
@@ -132,7 +135,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
         boolean broken = false;
         try {
             connBridge.sendRequest(Const.O_UPLOAD, uploadFileRequest, fileSize, writer);
-            return (String) connBridge.receiveResponse(null, UploadResponseHandler.class);
+            return (String) connBridge.receiveResponse(null, UploadResponseHandler.class, null);
         } catch (Exception e) {
             broken = true;
             throw e;
@@ -154,6 +157,74 @@ public class GodfsApiClientImpl implements GodfsApiClient {
         } finally {
             if (null != ips) {
                 ips.close();
+            }
+        }
+    }
+
+    //TODO
+    @Override
+    public void download(String path, long start, long offset, IReader byteReceiver) throws Exception {
+        if (null == byteReceiver) {
+            throw new IllegalArgumentException("parameter 'byteReceiver' cannot be null");
+        }
+        if (null == path || "".equals(path)) {
+            throw new IllegalArgumentException("parameter 'path' cannot be null or empty");
+        }
+        path = path.trim();
+        if (!path.matches(Const.PATH_REGEX)) {
+            log.warn("parameter 'path' mismatch pattern");
+        }
+        if (path.indexOf("/") != -1) {
+            path = "/" + path;
+        }
+        Set<ExpireMember> members = MemberManager.getMembersByGroup(null, false);
+        if (null == members || members.isEmpty()) {
+            throw new IllegalStateException("No storage server available[3].");
+        }
+
+        ExpireMember member;
+        Bridge connBridge;
+        Set<ExpireMember> excludes = null;
+        while(true) {
+            member = selectStorageMember(members, excludes, null, true);
+            if (null == member) {
+                throw new IllegalStateException("No storage server available[4].");
+            }
+            try {
+                log.debug("try to get connection for storage server[{}:{}].", member.getAddr(), member.getPort());
+                connBridge = Const.getPool().getBridge(member.getEndPoint());
+                break;
+            } catch (Exception e) {
+                if (null == excludes) {
+                    excludes = new HashSet<>(2);
+                    excludes.add(member);
+                }
+                log.error("error getting connection for storage server[{}:{}] duo to: {}", member.getAddr(), member.getPort(), e.getMessage());
+            }
+        }
+        OperationDownloadFileRequest downloadFileRequest = new OperationDownloadFileRequest();
+        downloadFileRequest.setPath(path);
+        downloadFileRequest.setStart(start);
+        downloadFileRequest.setOffset(offset);
+
+
+        boolean broken = false;
+        try {
+            log.debug("download {}", path);
+            connBridge.sendRequest(Const.O_DOWNLOAD_FILE, downloadFileRequest, 0, null);
+            connBridge.receiveResponse(null, DownloadFileResponseHandler.class, byteReceiver);
+        } catch (Exception e) {
+            if (e.getClass() == FileNotFoundException.class) {
+                throw e;
+            } else {
+                broken = true;
+            }
+            throw e;
+        } finally {
+            if (broken) {
+                Const.getPool().returnBrokenBridge(member.getEndPoint(), connBridge);
+            } else {
+                Const.getPool().returnBridge(member.getEndPoint(), connBridge);
             }
         }
     }

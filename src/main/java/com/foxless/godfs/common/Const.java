@@ -33,6 +33,7 @@ public class Const {
 
     // TODO temp
     public static final int MAX_CONN_EACH_STORAGE_SERVER = 10;
+    public static final int BUFFER_SIZE = 10240;
 
 
     private static IPool pool;

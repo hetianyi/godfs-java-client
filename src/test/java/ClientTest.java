@@ -3,14 +3,13 @@ import com.foxless.godfs.GoDFSClient;
 import com.foxless.godfs.api.GodfsApiClient;
 import com.foxless.godfs.bean.FileEntity;
 import com.foxless.godfs.bean.Tracker;
+import com.foxless.godfs.common.IReader;
 import com.foxless.godfs.common.UploadProgressMonitor;
 import com.foxless.godfs.config.ClientConfigurationBean;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 
 public class ClientTest {
 
@@ -73,6 +72,30 @@ public class ClientTest {
         File file = new File("E:/CBIMXiongAnManageTools.rar");
         String path = apiClient.upload(file, null, new UploadProgressMonitor());
         System.out.println(path);
+    }
+    @Test
+    public void testDownload() throws Exception {
+        Thread.sleep(3000);
+        final GodfsApiClient apiClient = client.getGodfsApiClient();
+        OutputStream ops = new FileOutputStream(new File("C:\\Users\\Administrator.WIN-01607081005\\Downloads\\test1111"));
+        apiClient.download("G01/110/S/1494b1b549cd9985d9d5c7f1bd2dcdc3", 0, -1, new IReader() {
+            @Override
+            public void read(byte[] buffer, int start, int len) {
+                try {
+                    ops.write(buffer, 0, len);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            @Override
+            public void finish() {
+                try {
+                    ops.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     @Test

@@ -79,7 +79,7 @@ public class Bridge {
         try {
             this.connection.getOutputStream().write(headerBuff.array());
             if (meta.getBodyLength() > 0 && null != bodyWriterHandler) {
-                bodyWriterHandler.write(this.connection.getOutputStream());
+                bodyWriterHandler.write(this.connection.getOutputStream(), bodyLen);
             }
         } catch (Exception e) {
             this.close();
@@ -92,12 +92,12 @@ public class Bridge {
      * @param responseHandler the handler for this response
      * @throws Exception if there is something error occurs, the connection will be close.
      */
-    public synchronized Object receiveResponse(Tracker tracker, Class<? extends IResponseHandler> responseHandler) throws Exception {
+    public synchronized Object receiveResponse(Tracker tracker, Class<? extends IResponseHandler> responseHandler, IReader byteReceiver) throws Exception {
         try {
             Meta meta = readHeadMeta();
             if (null != responseHandler) {
                 IResponseHandler handler = Handlers.getHandler(responseHandler);
-                return handler.handle(this, tracker, meta, this.connection.getInputStream());
+                return handler.handle(this, tracker, meta, byteReceiver);
             }
             return null;
         } catch (Exception e) {
@@ -113,7 +113,7 @@ public class Bridge {
         validateMeta.setUuid("JAVA-CLIENT-0.1.0");
 
         this.sendRequest(Const.O_CONNECT, validateMeta, 0, null);
-        this.receiveResponse(null, ValidateConnectionHandler.class);
+        this.receiveResponse(null, ValidateConnectionHandler.class, null);
     }
 
 
