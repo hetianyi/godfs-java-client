@@ -3,6 +3,18 @@ java client for godfs!
 
 [![Build Status](https://travis-ci.org/hetianyi/godfs-java-client.svg?branch=master)](https://travis-ci.org/hetianyi/godfs-java-client)
 
+
+maven dependency:
+```javascript
+<dependency>
+  <groupId>com.github.hetianyi</groupId>
+  <artifactId>godfs-java-client</artifactId>
+  <version>1.0.0</version>
+</dependency>
+```
+
+
+
 Simple usage:
 ```javascript
 # Init client
@@ -24,3 +36,4 @@ File file = new File("/tmp/foo/bar");
 String path = apiClient.upload(file, null, new UploadProgressMonitor());
 System.out.println(path);
 ```
+
