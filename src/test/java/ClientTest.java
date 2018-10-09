@@ -31,7 +31,7 @@ public class ClientTest {
     }
 
 
-    @Test
+    //@Test
     public void testQueryFile() throws Exception {
         final GodfsApiClient apiClient = client.getGodfsApiClient();
         for (int i = 0; i < 10; i++) {
@@ -56,7 +56,7 @@ public class ClientTest {
     }
 
 
-    @Test
+    //@Test
     public void testUploadFile() throws Exception {
         Thread.sleep(5000);
         final GodfsApiClient apiClient = client.getGodfsApiClient();
@@ -65,7 +65,7 @@ public class ClientTest {
         String path = apiClient.upload(ips, file.length(), null, new UploadProgressMonitor());
         System.out.println(path);
     }
-    @Test
+    //@Test
     public void testUploadLocalFile() throws Exception {
         Thread.sleep(3000);
         final GodfsApiClient apiClient = client.getGodfsApiClient();
@@ -73,7 +73,7 @@ public class ClientTest {
         String path = apiClient.upload(file, null, new UploadProgressMonitor());
         System.out.println(path);
     }
-    @Test
+    //@Test
     public void testDownload() throws Exception {
         Thread.sleep(3000);
         final GodfsApiClient apiClient = client.getGodfsApiClient();
@@ -98,7 +98,7 @@ public class ClientTest {
         });
     }
 
-    @Test
+    //@Test
     public void testMembers() throws Exception {
         Thread.sleep(5000000);
     }
