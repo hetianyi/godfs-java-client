@@ -6,7 +6,39 @@
 
     <groupId>com.github.hetianyi</groupId>
     <artifactId>godfs-java-client</artifactId>
-    <version>0.1.0</version>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <url>https://github.com/hetianyi/godfs-java-client</url>
+
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>hehety</name>
+            <email>hehety@outlook.com</email>
+            <url>https://github.com/hetianyi</url>
+        </developer>
+    </developers>
+
+
+    <scm>
+        <connection>scm:git:git@github.com:hetianyi/godfs-java-client.git</connection>
+        <developerConnection>scm:git:git@github.com:hetianyi/godfs-java-client.git</developerConnection>
+        <url>git@github.com:hetianyi/godfs-java-client.git</url>
+    </scm>
+
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -14,6 +46,7 @@
         <java.version>1.8</java.version>
         <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
     </properties>
+
 
     <dependencies>
 
@@ -47,6 +80,7 @@
             <version>1.7.25</version>
             <scope>test</scope>
         </dependency>
+
 
     </dependencies>
 
