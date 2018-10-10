@@ -5,7 +5,7 @@ java client for godfs!
 
 
 maven dependency:
-```javascript
+```xml
 <dependency>
   <groupId>com.github.hetianyi</groupId>
   <artifactId>godfs-java-client</artifactId>
@@ -16,7 +16,7 @@ maven dependency:
 
 
 Simple usage:
-```javascript
+```java
 # Init client
 ClientConfigurationBean configuration = new ClientConfigurationBean();
 configuration.setSecret("OASAD834jA97AAQE761==");
