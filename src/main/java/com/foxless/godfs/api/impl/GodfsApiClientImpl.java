@@ -235,32 +235,37 @@ public class GodfsApiClientImpl implements GodfsApiClient {
             try {
                 URL url = new URL(protocol + "://" + mem.getAddr() + ":" + mem.getHttpPort() +"/upload");
                 connection = (HttpURLConnection) url.openConnection();
-                connection.connect();
+                connection.setDoInput(true);
+                connection.setDoOutput(true);
                 connection.setRequestMethod("POST");
                 Enumeration<String> headerNames = request.getHeaderNames();
                 while (headerNames.hasMoreElements()) {
                     String name = headerNames.nextElement();
                     connection.addRequestProperty(name, request.getHeader(name));
                 }
+                connection.connect();
                 ops = connection.getOutputStream();
                 InputStream ips = request.getInputStream();
                 byte[] buffer = new byte[10204];
                 int len ;
+                log.debug("begin to read form stream");
                 while((len = ips.read(buffer)) != -1) {
                     dutyStream = true;
                     ops.write(buffer, 0, len);
                     ops.flush();
                 }
-                log.debug("bytes send success");
+                log.debug("bytes send success, reading response from server");
                 rips = connection.getInputStream();
                 StringBuffer sb = new StringBuffer();
                 while((len = rips.read(buffer)) != -1) {
                     sb.append(new String(buffer, 0, len));
                 }
                 rips.close();
+                log.debug("upload finish, response is [{}]", sb.toString());
                 return sb.toString();
             } catch (IOException e) {
-                log.debug("connection error with storage server {}:{} duo to: {}", mem.getAddr(), mem.getHttpPort(), e.getMessage());
+                //e.printStackTrace();
+                log.info("connection error with storage server {}:{} duo to: {}", mem.getAddr(), mem.getHttpPort(), e.getMessage());
                 if (dutyStream) {
                     break;
                 } else {
