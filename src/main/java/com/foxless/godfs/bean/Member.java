@@ -5,6 +5,8 @@ public class Member {
     private String instance_id;
     private String group;
     private int port;
+    private int httpPort;
+    private boolean httpEnable;
     private boolean readonly;
 
     public String getAddr() {
@@ -45,5 +47,21 @@ public class Member {
 
     public void setReadonly(boolean readonly) {
         this.readonly = readonly;
+    }
+
+    public int getHttpPort() {
+        return httpPort;
+    }
+
+    public void setHttpPort(int httpPort) {
+        this.httpPort = httpPort;
+    }
+
+    public boolean isHttpEnable() {
+        return httpEnable;
+    }
+
+    public void setHttpEnable(boolean httpEnable) {
+        this.httpEnable = httpEnable;
     }
 }

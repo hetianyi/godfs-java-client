@@ -5,8 +5,11 @@ import com.foxless.godfs.bean.MonitorProgressBean;
 import com.foxless.godfs.common.IMonitor;
 import com.foxless.godfs.common.IReader;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 
 /**
  * godfs api client.
@@ -29,22 +32,55 @@ public interface GodfsApiClient {
      * upload file in stream mode.
      * @param ips
      * @param fileSize
-     * @param group
-     * @param monitor
-     * @return
+     * @param group the group of the file
+     * @param monitor upload progress monitor
+     * @return file id like "G01/001/90234afcbba2314123112390234afcbb"
      * @throws Exception
      */
     String upload(InputStream ips, long fileSize, String group, IMonitor<MonitorProgressBean> monitor) throws Exception;
-
+    /**
+     * upload file in stream mode.
+     * @param ips
+     * @param fileSize
+     * @return file id like "G01/001/90234afcbba2314123112390234afcbb"
+     * @throws Exception
+     */
+    String upload(InputStream ips, long fileSize) throws Exception;
     /**
      * upload local file.
-     * @param file
-     * @param group
-     * @param monitor
-     * @return
+     * @param file the file to be uploaded
+     * @param group the group of the file
+     * @param monitor upload progress monitor
+     * @return file id like "G01/001/90234afcbba2314123112390234afcbb"
      * @throws Exception
      */
     String upload(File file, String group, IMonitor<MonitorProgressBean> monitor) throws Exception;
+    /**
+     * upload local file.
+     * @param file the file to be uploaded
+     * @return file id like "G01/001/90234afcbba2314123112390234afcbb"
+     * @throws Exception
+     */
+    String upload(File file) throws Exception;
+    /**
+     * streaming api for uploading file.<br/>
+     * NOTE: <i>this way needs storage server enable http upload.</i>
+     * @param request the http request, if you are using spring ---------------------------
+     * @param group the group of the file
+     * @param monitor upload progress monitor
+     * @param protocol only http or https, default is http.
+     * @return
+     * @throws Exception
+     */
+    String upload(HttpServletRequest request, String group, IMonitor<MonitorProgressBean> monitor, String protocol) throws Exception;
+    /**
+     * streaming api for uploading file.<br/>
+     * NOTE: <i>this way needs storage server enable http upload.</i>
+     * @param request the http request, if you are using spring ---------------------------
+     * @return
+     * @throws Exception
+     */
+    String upload(HttpServletRequest request) throws Exception;
 
     /**
      * download file using file path which pattern like 'G01/001/S/&lt;md5&gt;'

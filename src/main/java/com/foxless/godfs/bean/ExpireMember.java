@@ -9,6 +9,8 @@ public class ExpireMember {
     private String instance_id;
     private String group;
     private int port;
+    private int httpPort;
+    private boolean httpEnable;
     private boolean readonly;
     private Date expireTime;
     private EndPoint endPoint;
@@ -22,6 +24,8 @@ public class ExpireMember {
         this.instance_id = member.getInstance_id();
         this.group = member.getGroup();
         this.port = member.getPort();
+        this.httpEnable = member.isHttpEnable();
+        this.httpPort = member.getHttpPort();
         this.readonly = member.isReadonly();
         this.endPoint = EndPoint.fromMember(member);
         Const.getPool().initEndPoint(this.endPoint, Const.MAX_CONN_EACH_STORAGE_SERVER);
@@ -85,5 +89,21 @@ public class ExpireMember {
             return true;
         }
         return false;
+    }
+
+    public int getHttpPort() {
+        return httpPort;
+    }
+
+    public void setHttpPort(int httpPort) {
+        this.httpPort = httpPort;
+    }
+
+    public boolean isHttpEnable() {
+        return httpEnable;
+    }
+
+    public void setHttpEnable(boolean httpEnable) {
+        this.httpEnable = httpEnable;
     }
 }
