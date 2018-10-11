@@ -43,6 +43,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
         <maven-compiler-plugin.version>3.7.0</maven-compiler-plugin.version>
+        <skip.verify>false</skip.verify>
     </properties>
 
 
@@ -120,12 +121,15 @@
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>
-                        <phase>deploy</phase>
+                        <phase>verify</phase>
                         <goals>
                             <goal>sign</goal>
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <skip>${skip.verify}</skip>
+                </configuration>
             </plugin>
 
 
