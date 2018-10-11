@@ -4,7 +4,7 @@
 
     <groupId>com.github.hetianyi</groupId>
     <artifactId>godfs-java-client</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.2-SNAPSHOT</version>
     <packaging>jar</packaging>
     <url>https://github.com/hetianyi/godfs-java-client</url>
 
@@ -120,7 +120,7 @@
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>
-                        <phase>verify</phase>
+                        <phase>deploy</phase>
                         <goals>
                             <goal>sign</goal>
                         </goals>

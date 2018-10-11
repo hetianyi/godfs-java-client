@@ -237,16 +237,18 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setDoInput(true);
                 connection.setDoOutput(true);
+                connection.setChunkedStreamingMode(Const.BUFFER_SIZE);
                 connection.setRequestMethod("POST");
                 Enumeration<String> headerNames = request.getHeaderNames();
                 while (headerNames.hasMoreElements()) {
                     String name = headerNames.nextElement();
+                    log.debug("upload header >> {}:{}", name, request.getHeader(name));
                     connection.addRequestProperty(name, request.getHeader(name));
                 }
                 connection.connect();
                 ops = connection.getOutputStream();
                 InputStream ips = request.getInputStream();
-                byte[] buffer = new byte[10204];
+                byte[] buffer = new byte[Const.BUFFER_SIZE];
                 int len ;
                 log.debug("begin to read form stream");
                 while((len = ips.read(buffer)) != -1) {
@@ -263,7 +265,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                 rips.close();
                 log.debug("upload finish, response is [{}]", sb.toString());
                 return sb.toString();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 //e.printStackTrace();
                 log.info("connection error with storage server {}:{} duo to: {}", mem.getAddr(), mem.getHttpPort(), e.getMessage());
                 if (dutyStream) {
