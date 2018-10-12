@@ -227,6 +227,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
         boolean dutyStream = false;
         for (ExpireMember mem : members) {
             if (!mem.isHttpEnable()) {
+                log.debug("storage server {}:{} not support http upload, skip", mem.getAddr(), mem.getPort());
                 continue;
             }
             OutputStream ops = null;
@@ -234,6 +235,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
             InputStream rips = null;
             try {
                 URL url = new URL(protocol + "://" + mem.getAddr() + ":" + mem.getHttpPort() +"/upload");
+                log.debug("uploading file to: {}", url.toString());
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setDoInput(true);
                 connection.setDoOutput(true);
