@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * godfs java client entry class.
- *
+ * TODO print tracker servers info on boot.
  * @author hehety
  * @sine 1.0
  * @date 2018/09/26
