@@ -298,7 +298,6 @@ public class GodfsApiClientImpl implements GodfsApiClient {
         return upload(request, null, null, null);
     }
 
-    //TODO
     @Override
     public void download(String path, long start, long offset, IReader byteReceiver) throws Exception {
         if (null == byteReceiver) {
