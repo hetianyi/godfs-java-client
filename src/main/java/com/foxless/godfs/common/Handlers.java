@@ -20,19 +20,21 @@ public class Handlers {
 
     private static final Map<Class, Object> cachedHandlers = new HashMap<Class, Object>(5);
 
-    public static <T> T getHandler(Class<T> type) throws IllegalAccessException, InstantiationException {
+    public static <T> T getHandler(Class<T> type) throws IllegalAccessException, InstantiationException, ClassNotFoundException {
         Object o = cachedHandlers.get(type);
         if (o == null) {
             synchronized (cachedHandlers) {
                 if (null == cachedHandlers.get(type)) {
                     log.info("init handler for class: {}", type.getName());
-                    o = type.newInstance();
+                    o = Class.forName(type.getName(), true, Handlers.class.getClassLoader()).newInstance();
                     if (o instanceof IResponseHandler) {
                         log.info("init handler success for class: {}", type.getName());
                         cachedHandlers.put(type, o);
                     } else {
                         throw new IllegalArgumentException("class type must be " + IResponseHandler.class.getName() + " or it's subclass");
                     }
+                } else { // fix bug: java.lang.NullPointerException
+                    o = cachedHandlers.get(type);
                 }
             }
         }

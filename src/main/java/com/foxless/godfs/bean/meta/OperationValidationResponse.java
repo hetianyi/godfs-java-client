@@ -3,7 +3,7 @@ package com.foxless.godfs.bean.meta;
 public class OperationValidationResponse {
     private Integer status;
     private String uuid;
-    private boolean isnew;// tracker是否标志新client
+    private Boolean isnew;// tracker是否标志新client
 
     public Integer getStatus() {
         return status;
@@ -21,11 +21,11 @@ public class OperationValidationResponse {
         this.uuid = uuid;
     }
 
-    public boolean isIsnew() {
+    public Boolean isIsnew() {
         return isnew;
     }
 
-    public void setIsnew(boolean isnew) {
+    public void setIsnew(Boolean isnew) {
         this.isnew = isnew;
     }
 }

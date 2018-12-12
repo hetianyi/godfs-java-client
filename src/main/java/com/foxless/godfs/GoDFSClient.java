@@ -1,13 +1,13 @@
 package com.foxless.godfs;
 
-import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.foxless.godfs.api.GodfsApiClient;
 import com.foxless.godfs.api.impl.GodfsApiClientImpl;
-import com.foxless.godfs.common.ConnectionPool;
 import com.foxless.godfs.common.Const;
-import com.foxless.godfs.common.IPool;
 import com.foxless.godfs.common.TrackerMaintainer;
 import com.foxless.godfs.config.ClientConfigurationBean;
+import com.foxless.godfs.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +27,12 @@ public class GoDFSClient {
 
     private boolean init = false;
 
-    public GoDFSClient(ClientConfigurationBean configuration) {
+    public GoDFSClient(ClientConfigurationBean configuration) throws JsonProcessingException {
+        ObjectMapper objectMapper = Utils.getObjectMapper();
         if (null == configuration) {
             throw new IllegalArgumentException("configuration cannot be null.");
         }
-        log.debug("init client with config: {}", JSON.toJSONString(configuration));
+        log.debug("init client with config: {}", objectMapper.writeValueAsString(configuration));
         this.configuration = configuration;
     }
 

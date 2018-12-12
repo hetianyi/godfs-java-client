@@ -1,17 +1,16 @@
 package com.foxless.godfs.handler;
 
-import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.foxless.godfs.bean.ExpireMember;
 import com.foxless.godfs.bean.Member;
 import com.foxless.godfs.bean.Meta;
 import com.foxless.godfs.bean.Tracker;
 import com.foxless.godfs.bean.meta.OperationGetStorageServerResponse;
 import com.foxless.godfs.common.*;
+import com.foxless.godfs.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,7 +23,8 @@ public class SyncStorageResponseHandler implements IResponseHandler {
         if (meta.getError() != null) {
             throw meta.getError();
         }
-        OperationGetStorageServerResponse response = JSON.parseObject(new String(meta.getMetaBody()), OperationGetStorageServerResponse.class);
+        ObjectMapper objectMapper = Utils.getObjectMapper();
+        OperationGetStorageServerResponse response = objectMapper.readValue(new String(meta.getMetaBody()), OperationGetStorageServerResponse.class);
         log.debug("response status {} from server.", response.getStatus());
         if (response.getStatus() == Const.STATUS_OK) {
             if (null != response.getMembers()) {

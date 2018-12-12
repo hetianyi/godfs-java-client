@@ -1,6 +1,6 @@
 package com.foxless.godfs.handler;
 
-import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.foxless.godfs.bean.Meta;
 import com.foxless.godfs.bean.Tracker;
 import com.foxless.godfs.bean.meta.OperationDownloadFileResponse;
@@ -8,6 +8,7 @@ import com.foxless.godfs.common.Bridge;
 import com.foxless.godfs.common.Const;
 import com.foxless.godfs.common.IReader;
 import com.foxless.godfs.common.IResponseHandler;
+import com.foxless.godfs.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,8 +22,8 @@ public class DownloadFileResponseHandler implements IResponseHandler {
         if (meta.getError() != null) {
             throw meta.getError();
         }
-
-        OperationDownloadFileResponse response = JSON.parseObject(new String(meta.getMetaBody()), OperationDownloadFileResponse.class);
+        ObjectMapper objectMapper = Utils.getObjectMapper();
+        OperationDownloadFileResponse response = objectMapper.readValue(new String(meta.getMetaBody()), OperationDownloadFileResponse.class);
         log.debug("response status {} from server.", response.getStatus());
         if (response.getStatus() == Const.STATUS_NOT_FOUND) {
             throw new FileNotFoundException("file not found");

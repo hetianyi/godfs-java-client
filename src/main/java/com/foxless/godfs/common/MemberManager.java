@@ -1,6 +1,5 @@
 package com.foxless.godfs.common;
 
-import com.alibaba.fastjson.JSON;
 import com.foxless.godfs.bean.EndPoint;
 import com.foxless.godfs.bean.ExpireMember;
 import com.foxless.godfs.bean.Tracker;

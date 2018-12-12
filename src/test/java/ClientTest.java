@@ -1,4 +1,4 @@
-import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.foxless.godfs.GoDFSClient;
 import com.foxless.godfs.api.GodfsApiClient;
 import com.foxless.godfs.bean.FileEntity;
@@ -7,7 +7,6 @@ import com.foxless.godfs.common.IReader;
 import com.foxless.godfs.common.UploadProgressMonitor;
 import com.foxless.godfs.config.ClientConfigurationBean;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.io.*;
 
@@ -16,7 +15,7 @@ public class ClientTest {
     private GoDFSClient client;
 
     @Before
-    public void prepare() {
+    public void prepare() throws JsonProcessingException {
         ClientConfigurationBean configuration = new ClientConfigurationBean();
         configuration.setSecret("OASAD834jA97AAQE761==");
 
@@ -43,7 +42,7 @@ public class ClientTest {
                         FileEntity file = null;
                         try {
                             file = apiClient.query("G01/110/M/c595755240f35f167887a6fee4d527ca");
-                            System.out.println(JSON.toJSONString(file));
+                            //System.out.println(JSON.toJSONString(file));
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

@@ -97,8 +97,7 @@ public class Bridge {
             Meta meta = readHeadMeta();
             if (null != responseHandler) {
                 IResponseHandler handler = Handlers.getHandler(responseHandler);
-                // TODO check bug: java.lang.NullPointerException
-                return null == handler ? null : handler.handle(this, tracker, meta, byteReceiver);
+                return handler.handle(this, tracker, meta, byteReceiver);
             }
             return null;
         } catch (Exception e) {

@@ -1,6 +1,6 @@
 package com.foxless.godfs.handler;
 
-import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.foxless.godfs.bean.Meta;
 import com.foxless.godfs.bean.Tracker;
 import com.foxless.godfs.bean.meta.OperationUploadFileResponse;
@@ -8,10 +8,9 @@ import com.foxless.godfs.common.Bridge;
 import com.foxless.godfs.common.Const;
 import com.foxless.godfs.common.IReader;
 import com.foxless.godfs.common.IResponseHandler;
+import com.foxless.godfs.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.InputStream;
 
 public class UploadResponseHandler implements IResponseHandler {
     private static final Logger log = LoggerFactory.getLogger(UploadResponseHandler.class);
@@ -21,7 +20,8 @@ public class UploadResponseHandler implements IResponseHandler {
         if (meta.getError() != null) {
             throw meta.getError();
         }
-        OperationUploadFileResponse response = JSON.parseObject(new String(meta.getMetaBody()), OperationUploadFileResponse.class);
+        ObjectMapper objectMapper = Utils.getObjectMapper();
+        OperationUploadFileResponse response = objectMapper.readValue(new String(meta.getMetaBody()), OperationUploadFileResponse.class);
         log.debug("response status {} from server.", response.getStatus());
         if (response.getStatus() == Const.STATUS_OK) {
             return response.getPath();
