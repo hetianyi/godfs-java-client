@@ -17,10 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * godfs api client implementation.
@@ -222,19 +219,40 @@ public class GodfsApiClientImpl implements GodfsApiClient {
 
         Set<ExpireMember> members = MemberManager.getMembersByGroup(group, false);
         if (null == members || members.isEmpty()) {
-            throw new IllegalStateException("No storage server available[1].");
+            throw new IllegalStateException("no http storage server available[1].");
         }
-        boolean dutyStream = false;
-        for (ExpireMember mem : members) {
-            if (!mem.isHttpEnable()) {
-                log.debug("storage server {}:{} not support http upload, skip", mem.getAddr(), mem.getPort());
-                continue;
+        Set<ExpireMember> excludes = new HashSet<ExpireMember>(members.size());
+        for (;;) {
+            boolean dutyStream = false;
+            ExpireMember theOne = null;
+            for (ExpireMember m : members) {
+                if (!m.isHttpEnable()) {
+                    log.debug("storage server {}:{} not support http upload, skip", m.getAddr(), m.getPort());
+                    continue;
+                }
+                if (excludes.contains(m)) {
+                    continue;
+                }
+                if (null == theOne) {
+                    theOne = m;
+                    continue;
+                }
+                Long weight1 = MemberManager.getWeight(EndPoint.fromMember(m));
+                Long weight2 = MemberManager.getWeight(EndPoint.fromMember(theOne));
+                if (weight1 < weight2) {
+                    theOne = m;
+                }
             }
+            if (null == theOne) {
+                throw new IllegalStateException("no http storage server available[2].");
+            }
+            excludes.add(theOne);
+            MemberManager.increaseWeight(EndPoint.fromMember(theOne), 1);
             OutputStream ops = null;
             HttpURLConnection connection = null;
             InputStream rips = null;
             try {
-                URL url = new URL(protocol + "://" + mem.getAddr() + ":" + mem.getHttpPort() +"/upload");
+                URL url = new URL(protocol + "://" + theOne.getAddr() + ":" + theOne.getHttpPort() +"/upload");
                 log.debug("uploading file to: {}", url.toString());
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setDoInput(true);
@@ -269,7 +287,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                 return sb.toString();
             } catch (Exception e) {
                 //e.printStackTrace();
-                log.info("connection error with storage server {}:{} duo to: {}", mem.getAddr(), mem.getHttpPort(), e.getMessage());
+                log.info("connection error with storage server {}:{} duo to: {}", theOne.getAddr(), theOne.getHttpPort(), e.getMessage());
                 if (dutyStream) {
                     break;
                 } else {
@@ -396,11 +414,13 @@ public class GodfsApiClientImpl implements GodfsApiClient {
         Set<ExpireMember> excludes = null;
         ExpireMember member;
         Bridge connBridge;
+        // select specify node which can upload and match group
         Set<ExpireMember> members = MemberManager.getMembersByGroup(forUpload ? group : null, false);
         if (null == members || members.isEmpty()) {
             throw new IllegalStateException("No storage server available[1].");
         }
         while(true) {
+            // select from members by weight
             member = selectStorageMember(members, excludes, null, forUpload);
             if (null == member) {
                 throw new IllegalStateException("No storage server available[4].");
@@ -415,6 +435,8 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                     excludes.add(member);
                 }
                 log.error("error getting connection for storage server[{}:{}] duo to: {}", member.getAddr(), member.getPort(), e.getMessage());
+            } finally {
+                MemberManager.increaseWeight(EndPoint.fromMember(member), 1);
             }
         }
     }

@@ -28,6 +28,7 @@ public class Handlers {
                     log.info("init handler for class: {}", type.getName());
                     o = type.newInstance();
                     if (o instanceof IResponseHandler) {
+                        log.info("init handler success for class: {}", type.getName());
                         cachedHandlers.put(type, o);
                     } else {
                         throw new IllegalArgumentException("class type must be " + IResponseHandler.class.getName() + " or it's subclass");

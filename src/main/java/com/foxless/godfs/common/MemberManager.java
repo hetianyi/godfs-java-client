@@ -164,7 +164,9 @@ public class MemberManager {
     }
 
     public static long getWeight(EndPoint endPoint) {
-        return null == callWeight.get(endPoint) ? 0l : callWeight.get(endPoint);
+        synchronized (callWeight) {
+            return null == callWeight.get(endPoint) ? 0l : callWeight.get(endPoint);
+        }
     }
 
     public static void expireMember() {
