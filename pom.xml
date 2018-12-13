@@ -4,7 +4,7 @@
 
     <groupId>com.github.hetianyi</groupId>
     <artifactId>godfs-java-client</artifactId>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.4-SNAPSHOT</version>
     <packaging>jar</packaging>
     <url>https://github.com/hetianyi/godfs-java-client</url>
 
