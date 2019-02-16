@@ -23,8 +23,6 @@ public class GoDFSClient {
 
     private static final Logger log = LoggerFactory.getLogger(GoDFSClient.class);
 
-    private ClientConfigurationBean configuration;
-
     private boolean init = false;
 
     public GoDFSClient(ClientConfigurationBean configuration) throws JsonProcessingException {
