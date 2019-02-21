@@ -4,9 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.foxless.godfs.api.GodfsApiClient;
 import com.foxless.godfs.api.impl.GodfsApiClientImpl;
-import com.foxless.godfs.common.Const;
-import com.foxless.godfs.common.TrackerMaintainer;
-import com.foxless.godfs.config.ClientConfigurationBean;
+import com.foxless.godfs.bridge.Commons;
+import com.foxless.godfs.client.TrackerMaintainer;
 import com.foxless.godfs.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +24,8 @@ public class GoDFSClient {
 
     private boolean init = false;
 
+    private ClientConfigurationBean configuration;
+
     public GoDFSClient(ClientConfigurationBean configuration) throws JsonProcessingException {
         ObjectMapper objectMapper = Utils.getObjectMapper();
         if (null == configuration) {
@@ -36,9 +37,8 @@ public class GoDFSClient {
 
     public void start() {
         log.debug("starting godfs client");
-        Const.initPool(configuration);
+        Commons.initPool(configuration.getMaxConnections());
         TrackerMaintainer maintainer = new TrackerMaintainer(configuration);
-        new Thread(maintainer).start();
         init = true;
     }
 

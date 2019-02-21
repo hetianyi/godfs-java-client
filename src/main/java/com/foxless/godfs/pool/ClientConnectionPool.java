@@ -54,7 +54,7 @@ public class ClientConnectionPool {
                 return list.remove(0);
             }
             if (this.increaseActiveConnection(server, 0) < this.maxConnPerServer) {
-                Socket s = null;
+                Socket s;
                 try {
                     s = this.newConnection(server);
                     return s;
@@ -106,21 +106,28 @@ public class ClientConnectionPool {
 
 
     // ReturnConnBridge finish using tcp connection bridge and return it to connection pool.
-    public void ReturnConnBridge(server *app.ServerInfo, conn net.Conn) {
-        pool.getLock.Lock()
-        defer pool.getLock.Unlock()
-        connList := pool.getConnMap(server)
-        logger.Debug("return health connection:", connList.Len())
-        connList.PushBack(conn)
+    public void returnConnBridge(ServerInfo server, Socket conn) {
+        Object lock = getServerLock(server);
+        synchronized (lock) {
+            List<Socket> list = this.getConnMap(server);
+            list.add(conn);
+            logger.debug("return health connection, current server size is {}", list.size());
+        }
     }
 
     // ReturnBrokenConnBridge finish using tcp connection bridge and return it to connection pool.
-    func (pool *ClientConnectionPool) ReturnBrokenConnBridge(server *app.ServerInfo, conn net.Conn) {
-        pool.getLock.Lock()
-        defer pool.getLock.Unlock()
-        conn.Close()
-        pool.IncreaseActiveConnection(server, -1)
-        logger.Trace("return broken connection:", pool.connMap[GetServerKey(server)].Len())
+    public void returnBrokenConnBridge(ServerInfo server, Socket conn) {
+        Object lock = getServerLock(server);
+        synchronized (lock) {
+            if (null != conn) {
+                try {
+                    conn.close();
+                } catch (IOException e) {}
+            }
+            List<Socket> list = this.getConnMap(server);
+            this.increaseActiveConnection(server, -1);
+            logger.debug("return broken connection:, current server size is {}", list.size());
+        }
     }
 
 }

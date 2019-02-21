@@ -1,18 +1,16 @@
 package com.foxless.godfs.api.impl;
 
+import com.foxless.godfs.ClientConfigurationBean;
 import com.foxless.godfs.api.GodfsApiClient;
-import com.foxless.godfs.bean.*;
-import com.foxless.godfs.bean.meta.OperationDownloadFileRequest;
-import com.foxless.godfs.bean.meta.OperationQueryFileRequest;
-import com.foxless.godfs.bean.meta.OperationUploadFileRequest;
+import com.foxless.godfs.bridge.TcpBridgeClient;
+import com.foxless.godfs.bridge.meta.QueryFileMeta;
+import com.foxless.godfs.bridge.meta.QueryFileResponseMeta;
+import com.foxless.godfs.client.MemberManager;
 import com.foxless.godfs.common.*;
-import com.foxless.godfs.config.ClientConfigurationBean;
-import com.foxless.godfs.handler.DownloadFileResponseHandler;
-import com.foxless.godfs.handler.QueryFileResponseHandler;
-import com.foxless.godfs.handler.UploadResponseHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.Query;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -30,7 +28,7 @@ import java.util.*;
  */
 public class GodfsApiClientImpl implements GodfsApiClient {
 
-    private static final Logger log = LoggerFactory.getLogger(GodfsApiClientImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(GodfsApiClientImpl.class);
 
     private static GodfsApiClientImpl godfsApiClientInstance;
 
@@ -48,14 +46,14 @@ public class GodfsApiClientImpl implements GodfsApiClient {
     }
 
     @Override
-    public FileEntity query(String pathOrMd5) throws Exception {
+    public FileVO query(String pathOrMd5) throws Exception {
         if (null == pathOrMd5 || "".equals(pathOrMd5)) {
-            log.warn("query parameter cannot be null or empty");
+            logger.error("query parameter cannot be null or empty");
             return null;
         }
         pathOrMd5 = pathOrMd5.trim();
         if (!pathOrMd5.matches(Const.PATH_REGEX) && !pathOrMd5.matches(Const.MD5_REGEX)) {
-            log.warn("query parameter mismatch pattern");
+            logger.error("query parameter mismatch pattern");
             return null;
         }
         if (pathOrMd5.indexOf("/") != -1) {
@@ -64,31 +62,24 @@ public class GodfsApiClientImpl implements GodfsApiClient {
 
         if (null != configuration.getTrackers()) {
             for (Tracker tracker : configuration.getTrackers()) {
-                EndPoint endPoint = EndPoint.fromTracker(tracker);
-                Const.getPool().initEndPoint(endPoint, tracker.getMaxConnections());
-                Bridge bridge = null;
-                boolean broken = false;
                 try {
-                    log.debug("query fileEntity '{}' from tracker server: {}:{}", pathOrMd5, tracker.getHost(), tracker.getPort());
-                    bridge = Const.getPool().getBridge(endPoint);
-                    OperationQueryFileRequest queryFileRequest = new OperationQueryFileRequest();
-                    queryFileRequest.setMd5(pathOrMd5);
-                    bridge.sendRequest(Const.O_QUERY_FILE, queryFileRequest, 0, null);
-                    FileEntity fileEntity = (FileEntity) bridge.receiveResponse(tracker, QueryFileResponseHandler.class, null);
-                    if (null != fileEntity) {
-                        return fileEntity;
+                    logger.debug("query fileEntity '{}' from tracker server: {}:{}", pathOrMd5, tracker.getHost(), tracker.getPort());
+                    ServerInfo info = ServerInfo.fromTracker(tracker);
+                    info.setSecret(tracker.getSecret());
+                    TcpBridgeClient client = new TcpBridgeClient(info);
+                    client.connect();
+                    client.validate();
+                    QueryFileMeta meta = new QueryFileMeta();
+                    meta.setPathMd5(pathOrMd5);
+                    QueryFileResponseMeta respMeta = client.queryFile(meta);
+                    if (respMeta.isExist()) {
+                        return respMeta.getFile();
                     }
+                    logger.debug("cannot find file from tracker server {}:{}", tracker.getHost(), tracker.getPort());
                     continue;
                 } catch (Exception e) {
-                    broken = true;
-                    log.error("error query file from tracker server [{}:{}] due to: {}", tracker.getHost(), tracker.getPort(), e.getMessage());
-                    throw e;
-                } finally {
-                    if (broken) {
-                        Const.getPool().returnBrokenBridge(endPoint, bridge);
-                    } else {
-                        Const.getPool().returnBridge(endPoint, bridge);
-                    }
+                    logger.error("error query file from tracker server [{}:{}] due to: {}", tracker.getHost(), tracker.getPort(), e.getMessage());
+                    continue;
                 }
             }
         } else {
@@ -149,66 +140,6 @@ public class GodfsApiClientImpl implements GodfsApiClient {
             }
         }
     }
-
-    /*@Override
-    public Map<String, List<String>> upload(HttpServletRequest request, String group, IMonitor<MonitorProgressBean> monitor) throws Exception {
-
-        Tuple tuple = selectUsableStorageMember(group, true);
-        ExpireMember member = tuple.getF();
-        Bridge connBridge = tuple.getS();
-
-        // Check that we have a file upload request
-        boolean isMultipart = ServletFileUpload.isMultipartContent(request);
-        if (!isMultipart) {
-            throw new IllegalStateException("Invalid multipart form data.");
-        }
-        // Create a new file upload handler
-        ServletFileUpload upload = new ServletFileUpload();
-
-        Map<String, List<String>> ret = new HashMap<>();
-        // Parse the request
-        FileItemIterator iter = upload.getItemIterator(request);
-        while (iter.hasNext()) {
-            FileItemStream item = iter.next();
-            String name = item.getFieldName();
-            InputStream stream = item.openStream();
-            if (item.isFormField()) {
-                String value = Streams.asString(stream);
-                log.debug("Form field {} with value {} detected.", name, value);
-                List<String> vals = ret.get(name);
-                if (null == vals) {
-                    vals = new ArrayList<>(3);
-                    ret.put(name, vals);
-                }
-                vals.add(value);
-            } else {
-                log.debug("File field {} with file name {} detected.", name, item.getName());
-                // Process the input stream
-                if (!member.isHttpEnable()) {
-                    OperationUploadFileRequest uploadFileRequest = new OperationUploadFileRequest();
-                    uploadFileRequest.setFileSize(fileSize);
-                    uploadFileRequest.setExt("");
-                    uploadFileRequest.setMd5("");
-                    UploadStreamWriter writer = new UploadStreamWriter(ips, monitor);
-
-                    boolean broken = false;
-                    try {
-                        connBridge.sendRequest(Const.O_UPLOAD, uploadFileRequest, fileSize, writer);
-                        return (String) connBridge.receiveResponse(null, UploadResponseHandler.class, null);
-                    } catch (Exception e) {
-                        broken = true;
-                        throw e;
-                    } finally {
-                        if (broken) {
-                            Const.getPool().returnBrokenBridge(member.getEndPoint(), connBridge);
-                        } else {
-                            Const.getPool().returnBridge(member.getEndPoint(), connBridge);
-                        }
-                    }
-                }
-            }
-        }
-    }*/
 
     @Override
     public String upload(HttpServletRequest request, String group, IMonitor<MonitorProgressBean> monitor, String protocol) throws Exception {
@@ -383,24 +314,24 @@ public class GodfsApiClientImpl implements GodfsApiClient {
      * @param forUpload
      * @return
      */
-    private ExpireMember selectStorageMember(Set<ExpireMember> members, Set<ExpireMember> exclude, String instanceId, boolean forUpload) {
-        ExpireMember theOne = null;
-        for (ExpireMember m : members) {
+    private StorageDO selectStorageMember(Set<StorageDO> members, Set<StorageDO> exclude, String instanceId, boolean forUpload) {
+        StorageDO theOne = null;
+        for (StorageDO m : members) {
             if (null != exclude && exclude.contains(m)) {
                 continue;
             }
             if (null != instanceId && !"".equals(instanceId) && Objects.equals(m.getInstance_id(), instanceId)) {
                 return m;
             }
-            if (forUpload && m.isReadonly()) {
+            if (forUpload && m.isReadOnly()) {
                 continue;
             }
             if (null == theOne) {
                 theOne = m;
                 continue;
             }
-            Long weight1 = MemberManager.getWeight(EndPoint.fromMember(m));
-            Long weight2 = MemberManager.getWeight(EndPoint.fromMember(theOne));
+            Long weight1 = MemberManager.getWeight(m.getUuid());
+            Long weight2 = MemberManager.getWeight(m.getUuid());
             if (weight1 < weight2) {
                 theOne = m;
             }
@@ -410,23 +341,24 @@ public class GodfsApiClientImpl implements GodfsApiClient {
 
 
 
-    private Tuple selectUsableStorageMember(String group, boolean forUpload) {
-        Set<ExpireMember> excludes = null;
-        ExpireMember member;
+    private ObjectTuple<StorageDO, TcpBridgeClient> selectUsableStorageMember(String group, boolean forUpload) {
+        Set<StorageDO> excludes = null;
+        StorageDO member;
         Bridge connBridge;
-        // select specify node which can upload and match group
-        Set<ExpireMember> members = MemberManager.getMembersByGroup(forUpload ? group : null, false);
+        // select specify nodes which match the group and can upload
+        Set<StorageDO> members = MemberManager.getMembersByGroup(forUpload ? group : null, false);
         if (null == members || members.isEmpty()) {
-            throw new IllegalStateException("No storage server available[1].");
+            throw new IllegalStateException("no storage server available [1].");
         }
         while(true) {
             // select from members by weight
             member = selectStorageMember(members, excludes, null, forUpload);
             if (null == member) {
-                throw new IllegalStateException("No storage server available[4].");
+                throw new IllegalStateException("no storage server available [4].");
             }
             try {
-                log.debug("try to get connection for storage server[{}:{}].", member.getAddr(), member.getPort());
+                ServerInfo info = ServerInfo.fromTracker()
+                logger.debug("try to get connection for storage server[{}:{}].", member.getAddr(), member.getPort());
                 connBridge = Const.getPool().getBridge(member.getEndPoint());
                 return new Tuple(member, connBridge);
             } catch (Exception e) {
@@ -434,7 +366,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                     excludes = new HashSet<>(2);
                     excludes.add(member);
                 }
-                log.error("error getting connection for storage server[{}:{}] duo to: {}", member.getAddr(), member.getPort(), e.getMessage());
+                logger.error("error getting connection for storage server[{}:{}] duo to: {}", member.getAddr(), member.getPort(), e.getMessage());
             } finally {
                 MemberManager.increaseWeight(EndPoint.fromMember(member), 1);
             }

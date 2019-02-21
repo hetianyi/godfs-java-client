@@ -1,15 +1,11 @@
 package com.foxless.godfs.api;
 
-import com.foxless.godfs.bean.FileEntity;
-import com.foxless.godfs.bean.MonitorProgressBean;
-import com.foxless.godfs.common.IMonitor;
-import com.foxless.godfs.common.IReader;
+
+import com.foxless.godfs.common.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
 
 /**
  * godfs api client.
@@ -26,7 +22,7 @@ public interface GodfsApiClient {
      * @param pathOrMd5 path like "G01/001/90234afcbba2314123112390234afcbb" or just a file md5
      * @throws Exception
      */
-    FileEntity query(String pathOrMd5) throws Exception;
+    FileVO query(String pathOrMd5) throws Exception;
 
     /**
      * upload file in stream mode.
