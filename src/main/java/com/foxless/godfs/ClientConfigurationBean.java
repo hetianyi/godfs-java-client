@@ -49,7 +49,11 @@ public class ClientConfigurationBean implements Serializable {
         return maxConnections;
     }
 
-    public void setMaxConnections(Integer maxConnections) {
-        this.maxConnections = maxConnections;
+    public void setMaxConnections(int maxConnections) {
+        if (maxConnections < 1) {
+            this.maxConnections = 20;
+        } else {
+            this.maxConnections = maxConnections;
+        }
     }
 }

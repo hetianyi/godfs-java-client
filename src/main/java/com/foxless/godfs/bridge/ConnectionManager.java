@@ -4,7 +4,6 @@ import com.foxless.godfs.common.ServerInfo;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.security.MessageDigest;
 
 public class ConnectionManager {
 

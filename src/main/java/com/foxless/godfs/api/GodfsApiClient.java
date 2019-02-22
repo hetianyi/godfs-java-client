@@ -87,10 +87,10 @@ public interface GodfsApiClient {
      * @param byteReceiver byte receiver handling download file bytes.
      * @throws Exception
      */
-    void download(String path, long start, long offset, IReader byteReceiver) throws Exception;
+    void download(String path, long start, long offset, IDownloadReader byteReceiver) throws Exception;
 
     /**
-     * @see #download(String, long, long, IReader)
+     * @see #download(String, long, long, IDownloadReader)
      */
-    void download(String path, IReader byteReceiver) throws Exception;
+    void download(String path, IDownloadReader byteReceiver) throws Exception;
 }

@@ -17,10 +17,10 @@ public class ClientConnectionPool {
     private Map<String, Integer> activeConnCounter;
     private Map<String, Object> serverLock;
     private Integer maxConnPerServer;
-    private Integer totalActiveConn;
+    private int totalActiveConn = 0;
 
 
-    public void init(Integer maxConnPerServer) {
+    public void init(int maxConnPerServer) {
         this.connMap = new HashMap<>();
         this.activeConnCounter = new HashMap<>();
         this.serverLock = new HashMap<>();

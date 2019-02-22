@@ -8,14 +8,14 @@ public class ServerInfo {
     public static final int AccessFlagAdvertise = 2;
 
     private String host;
-    private Integer port;
+    private int port;
     private String group;
     private String instanceId;
     private String secret;
-    private Integer accessFlag;
+    private int accessFlag;
     private String advertiseAddr;
-    private Integer advertisePort;
-    private Boolean tracker;
+    private int advertisePort;
+    private boolean tracker;
 
 
     public static ServerInfo fromConnStr(String connStr) {
@@ -31,6 +31,7 @@ public class ServerInfo {
         server.host = tracker.getHost();
         server.port = tracker.getPort();
         server.tracker = true;
+        server.secret = tracker.getSecret();
         return server;
     }
 
@@ -43,6 +44,7 @@ public class ServerInfo {
         server.group = storageDO.getGroup();
         server.instanceId = storageDO.getInstanceId();
         server.tracker = true;
+        server.secret = storageDO.getSecret();
         return server;
     }
 

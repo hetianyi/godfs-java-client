@@ -44,6 +44,7 @@ public class MemberManager {
                     }
                     if (!hit) {
                         log.debug("add storage members: {}:{} of tracker: {}:{}", m1.getHost(), m1.getPort(), tracker.getHost(), tracker.getPort());
+                        m1.setExpireTime(System.currentTimeMillis() + TrackerMaintainer.SCHEDULE_INTERVAL * 3);
                         ret.add(m1);
                     }
                 }
@@ -139,7 +140,7 @@ public class MemberManager {
                     continue;
                 }
                 for (StorageDO m : set) {
-                    if (Objects.equals(group, m.getGroup())
+                    if ((null == group || Objects.equals(group, m.getGroup()))
                             && Objects.equals(m.isReadOnly(), readonly)) {
                         allMember.add(m);
                     }

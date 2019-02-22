@@ -1,11 +1,9 @@
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.foxless.godfs.ClientConfigurationBean;
 import com.foxless.godfs.GoDFSClient;
 import com.foxless.godfs.api.GodfsApiClient;
-import com.foxless.godfs.bean.Tracker;
-import com.foxless.godfs.bean.meta.OperationValidationResponse;
-import com.foxless.godfs.common.UploadProgressMonitor;
-import com.foxless.godfs.config.ClientConfigurationBean;
+import com.foxless.godfs.common.Tracker;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -20,19 +18,18 @@ public class ClientTest1 {
     @Before
     public void prepare() throws JsonProcessingException {
         ClientConfigurationBean configuration = new ClientConfigurationBean();
-        configuration.setSecret("OASAD834jA97AAQE761==");
-
         Tracker tracker = new Tracker();
-        tracker.setHost("192.168.0.102");
+        tracker.setHost("192.168.1.164");
         tracker.setPort(1022);
-        tracker.setMaxConnections(5);
+        tracker.setSecret("OASAD834jA97AAQE761==");
         configuration.addTracker(tracker);
 
         Tracker tracker1 = new Tracker();
         tracker1.setHost("192.168.0.102");
         tracker1.setPort(1023);
-        tracker1.setMaxConnections(5);
+        tracker1.setSecret("OASAD834jA97AAQE761==");
         configuration.addTracker(tracker1);
+        configuration.setMaxConnections(10);
 
         client = new GoDFSClient(configuration);
         client.start();
@@ -45,8 +42,8 @@ public class ClientTest1 {
         for (int i = 24; i < 30; i++) {
             File file = new File("E:\\TEMP\\222\\" + i);
             InputStream ips = new FileInputStream(file);
-            String path = apiClient.upload(ips, file.length(), null, new UploadProgressMonitor());
-            System.out.println(path);
+//            String path = apiClient.upload(ips, file.length(), null, new UploadProgressMonitor());
+//            System.out.println(path);
         }
 
     }
@@ -57,8 +54,8 @@ public class ClientTest1 {
         Thread.sleep(3000);
         File file = new File("D:\\图片\\gif\\20120517084154893.gif");
         InputStream ips = new FileInputStream(file);
-        String path = apiClient.upload(ips, file.length(), null, new UploadProgressMonitor());
-        System.out.println(path);
+//        String path = apiClient.upload(ips, file.length(), null, new UploadProgressMonitor());
+//        System.out.println(path);
 
     }
 
@@ -74,8 +71,8 @@ public class ClientTest1 {
     public void testUploadFile3() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         String str = "{\"status\":0,\"uuid\":\"lgomzycnwhukwjesufqhncbgxax4jq\",\"isnew\":true}";
-        OperationValidationResponse ret =mapper.readValue(str, OperationValidationResponse.class);
-        System.out.println(ret);
+//        OperationValidationResponse ret =mapper.readValue(str, OperationValidationResponse.class);
+//        System.out.println(ret);
     }
 
 

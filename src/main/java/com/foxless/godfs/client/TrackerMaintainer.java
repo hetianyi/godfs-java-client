@@ -19,9 +19,9 @@ import java.util.*;
  * start in standalone thread in case of block main thread.
  *
  * @author hehety
+ * @version 1.0
  * @sine 1.0
  * @date 2018/09/26
- * @version 1.0
  */
 public class TrackerMaintainer {
 
@@ -50,12 +50,11 @@ public class TrackerMaintainer {
             public void run() {
                 MemberManager.expireMember();
             }
-        }, SCHEDULE_INTERVAL*3 + 5000, SCHEDULE_INTERVAL*3);
+        }, SCHEDULE_INTERVAL * 3 + 5000, SCHEDULE_INTERVAL * 3);
     }
 
 
     private class TimerSyncMemberTask extends TimerTask {
-
         private Tracker tracker;
         private TcpBridgeClient client;
 
@@ -85,10 +84,15 @@ public class TrackerMaintainer {
                 } else {
                     logger.debug("no storage server found.");
                 }
-
             } catch (Exception e) {
                 logger.error(e.getMessage());
-                client = null;
+                if (null != client) {
+                    client.destory();
+                }
+            } finally {
+                if (null != client) {
+                    client.close();
+                }
             }
         }
     }

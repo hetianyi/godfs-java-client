@@ -2,20 +2,21 @@ package com.foxless.godfs.api.impl;
 
 import com.foxless.godfs.ClientConfigurationBean;
 import com.foxless.godfs.api.GodfsApiClient;
-import com.foxless.godfs.bridge.TcpBridgeClient;
-import com.foxless.godfs.bridge.meta.QueryFileMeta;
-import com.foxless.godfs.bridge.meta.QueryFileResponseMeta;
+import com.foxless.godfs.bridge.*;
+import com.foxless.godfs.bridge.meta.*;
 import com.foxless.godfs.client.MemberManager;
 import com.foxless.godfs.common.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.Query;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * godfs api client implementation.
@@ -62,11 +63,11 @@ public class GodfsApiClientImpl implements GodfsApiClient {
 
         if (null != configuration.getTrackers()) {
             for (Tracker tracker : configuration.getTrackers()) {
+                TcpBridgeClient client = null;
                 try {
-                    logger.debug("query fileEntity '{}' from tracker server: {}:{}", pathOrMd5, tracker.getHost(), tracker.getPort());
+                    logger.debug("query file '{}' from tracker server: {}:{}", pathOrMd5, tracker.getHost(), tracker.getPort());
                     ServerInfo info = ServerInfo.fromTracker(tracker);
-                    info.setSecret(tracker.getSecret());
-                    TcpBridgeClient client = new TcpBridgeClient(info);
+                    client = new TcpBridgeClient(info);
                     client.connect();
                     client.validate();
                     QueryFileMeta meta = new QueryFileMeta();
@@ -79,7 +80,15 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                     continue;
                 } catch (Exception e) {
                     logger.error("error query file from tracker server [{}:{}] due to: {}", tracker.getHost(), tracker.getPort(), e.getMessage());
+                    if (null != client) {
+                        client.destory();
+                        client = null;
+                    }
                     continue;
+                } finally {
+                    if (null != client) {
+                        client.close();
+                    }
                 }
             }
         } else {
@@ -97,28 +106,58 @@ public class GodfsApiClientImpl implements GodfsApiClient {
     @Override
     public String upload(InputStream ips, long fileSize, String group, IMonitor<MonitorProgressBean> monitor) throws Exception {
 
-        Tuple tuple = selectUsableStorageMember(group, true);
-        ExpireMember member = tuple.getF();
-        Bridge connBridge = tuple.getS();
+        ObjectTuple<StorageDO, TcpBridgeClient> tuple = selectUsableStorageMember(group, true);
+        StorageDO member = tuple.getF();
+        final TcpBridgeClient client = tuple.getS();
 
-        OperationUploadFileRequest uploadFileRequest = new OperationUploadFileRequest();
-        uploadFileRequest.setFileSize(fileSize);
-        uploadFileRequest.setExt("");
-        uploadFileRequest.setMd5("");
-        UploadStreamWriter writer = new UploadStreamWriter(ips, monitor);
-
-        boolean broken = false;
+        UploadFileMeta meta = new UploadFileMeta();
+        meta.setFileSize(fileSize);
+        meta.setExt("");
+        meta.setMd5("");
+        boolean err = false;
         try {
-            connBridge.sendRequest(Const.O_UPLOAD, uploadFileRequest, fileSize, writer);
-            return (String) connBridge.receiveResponse(null, UploadResponseHandler.class, null);
+            UploadFileResponseMeta respMeta = client.uploadFile(meta, new IHandler() {
+                @Override
+                public void resolve(ConnectionManager manager, Frame frame) {
+                    MonitorProgressBean progress = new MonitorProgressBean();
+                    byte[] tmp = new byte[Const.BUFFER_SIZE];
+                    int nextRead;
+                    long read = 0;
+                    try {
+                        while (read < fileSize) {
+                            if (fileSize - read > Const.BUFFER_SIZE) {
+                                nextRead = Const.BUFFER_SIZE;
+                            } else {
+                                nextRead = (int)(fileSize - read);
+                            }
+                            read += StreamResolver.readBytes(tmp, nextRead, ips);
+                            client.getConnManager().getConn().getOutputStream().write(tmp, 0, nextRead);
+                            if (null != monitor) {
+                                monitor.monitor(progress);
+                            }
+                        }
+                        client.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        client.destory();
+                    }
+                }
+
+            });
+            if (null == respMeta) {
+                throw new IllegalStateException("error upload file to server "
+                        + member.getHost() + ":"+ member.getPort() +": cannot get response from server");
+            }
+            return respMeta.getPath();
         } catch (Exception e) {
-            broken = true;
+            err = true;
+            if (null != client) {
+                client.destory();
+            }
             throw e;
         } finally {
-            if (broken) {
-                Const.getPool().returnBrokenBridge(member.getEndPoint(), connBridge);
-            } else {
-                Const.getPool().returnBridge(member.getEndPoint(), connBridge);
+            if (!err) {
+                client.close();
             }
         }
     }
@@ -148,17 +187,17 @@ public class GodfsApiClientImpl implements GodfsApiClient {
             protocol = "http";
         }
 
-        Set<ExpireMember> members = MemberManager.getMembersByGroup(group, false);
+        Set<StorageDO> members = MemberManager.getMembersByGroup(group, false);
         if (null == members || members.isEmpty()) {
             throw new IllegalStateException("no http storage server available[1].");
         }
-        Set<ExpireMember> excludes = new HashSet<ExpireMember>(members.size());
+        Set<StorageDO> excludes = new HashSet<StorageDO>(members.size());
         for (;;) {
             boolean dutyStream = false;
-            ExpireMember theOne = null;
-            for (ExpireMember m : members) {
+            StorageDO theOne = null;
+            for (StorageDO m : members) {
                 if (!m.isHttpEnable()) {
-                    log.debug("storage server {}:{} not support http upload, skip", m.getAddr(), m.getPort());
+                    logger.debug("storage server {}:{} not support http upload, skip", m.getHost(), m.getPort());
                     continue;
                 }
                 if (excludes.contains(m)) {
@@ -168,8 +207,8 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                     theOne = m;
                     continue;
                 }
-                Long weight1 = MemberManager.getWeight(EndPoint.fromMember(m));
-                Long weight2 = MemberManager.getWeight(EndPoint.fromMember(theOne));
+                Long weight1 = MemberManager.getWeight(m.getUuid());
+                Long weight2 = MemberManager.getWeight(theOne.getUuid());
                 if (weight1 < weight2) {
                     theOne = m;
                 }
@@ -178,13 +217,13 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                 throw new IllegalStateException("no http storage server available[2].");
             }
             excludes.add(theOne);
-            MemberManager.increaseWeight(EndPoint.fromMember(theOne), 1);
+            MemberManager.increaseWeight(theOne.getUuid(), 1);
             OutputStream ops = null;
             HttpURLConnection connection = null;
             InputStream rips = null;
             try {
-                URL url = new URL(protocol + "://" + theOne.getAddr() + ":" + theOne.getHttpPort() +"/upload");
-                log.debug("uploading file to: {}", url.toString());
+                URL url = new URL(protocol + "://" + theOne.getAdvertiseAddr() + ":" + theOne.getHttpPort() +"/upload");
+                logger.debug("uploading file to: {}", url.toString());
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setDoInput(true);
                 connection.setDoOutput(true);
@@ -193,7 +232,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                 Enumeration<String> headerNames = request.getHeaderNames();
                 while (headerNames.hasMoreElements()) {
                     String name = headerNames.nextElement();
-                    log.debug("upload header >> {}:{}", name, request.getHeader(name));
+                    logger.debug("upload header >> {}:{}", name, request.getHeader(name));
                     connection.addRequestProperty(name, request.getHeader(name));
                 }
                 connection.connect();
@@ -201,24 +240,24 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                 InputStream ips = request.getInputStream();
                 byte[] buffer = new byte[Const.BUFFER_SIZE];
                 int len ;
-                log.debug("begin to read form stream");
+                logger.debug("begin to read form stream");
                 while((len = ips.read(buffer)) != -1) {
                     dutyStream = true;
                     ops.write(buffer, 0, len);
                     ops.flush();
                 }
-                log.debug("bytes send success, reading response from server");
+                logger.debug("bytes send success, reading response from server");
                 rips = connection.getInputStream();
                 StringBuffer sb = new StringBuffer();
                 while((len = rips.read(buffer)) != -1) {
                     sb.append(new String(buffer, 0, len));
                 }
                 rips.close();
-                log.debug("upload finish, response is [{}]", sb.toString());
+                logger.debug("upload finish, response is [{}]", sb.toString());
                 return sb.toString();
             } catch (Exception e) {
                 //e.printStackTrace();
-                log.info("connection error with storage server {}:{} duo to: {}", theOne.getAddr(), theOne.getHttpPort(), e.getMessage());
+                logger.info("connection error with storage server {}:{} duo to: {}", theOne.getAdvertiseAddr(), theOne.getHttpPort(), e.getMessage());
                 if (dutyStream) {
                     break;
                 } else {
@@ -248,55 +287,56 @@ public class GodfsApiClientImpl implements GodfsApiClient {
     }
 
     @Override
-    public void download(String path, long start, long offset, IReader byteReceiver) throws Exception {
+    public void download(String path, long start, long offset, IDownloadReader byteReceiver) throws Exception {
         if (null == byteReceiver) {
-            throw new IllegalArgumentException("parameter 'byteReceiver' cannot be null");
+            throw new IllegalArgumentException("no byteReceiver specified");
         }
         if (null == path || "".equals(path)) {
             throw new IllegalArgumentException("parameter 'path' cannot be null or empty");
         }
         path = path.trim();
         if (!path.matches(Const.PATH_REGEX)) {
-            log.warn("parameter 'path' mismatch pattern");
+            logger.warn("parameter 'path' mismatch pattern");
         }
         if (path.indexOf("/") != -1) {
             path = "/" + path;
         }
 
+        ObjectTuple<StorageDO, TcpBridgeClient> tuple = selectUsableStorageMember(null, false);
+        StorageDO member = tuple.getF();
+        TcpBridgeClient client = tuple.getS();
+        DownloadFileMeta meta = new DownloadFileMeta();
+        meta.setPath(path);
+        meta.setStart(start);
+        meta.setOffset(offset);
 
-        Tuple tuple = selectUsableStorageMember(null, false);
-        ExpireMember member = tuple.getF();
-        Bridge connBridge = tuple.getS();
-
-        OperationDownloadFileRequest downloadFileRequest = new OperationDownloadFileRequest();
-        downloadFileRequest.setPath(path);
-        downloadFileRequest.setStart(start);
-        downloadFileRequest.setOffset(offset);
-
-
-        boolean broken = false;
         try {
-            log.debug("download {}", path);
-            connBridge.sendRequest(Const.O_DOWNLOAD_FILE, downloadFileRequest, 0, null);
-            connBridge.receiveResponse(null, DownloadFileResponseHandler.class, byteReceiver);
-        } catch (Exception e) {
-            if (e.getClass() == FileNotFoundException.class) {
-                throw e;
-            } else {
-                broken = true;
+            ObjectTuple<DownloadFileResponseMeta, Frame> retTuple = client.downloadFile(meta);
+            if (null == retTuple.getF()) {
+                throw new IllegalStateException("error download file from server "
+                        + member.getHost() + ":"+ member.getPort() +": cannot get response from server");
             }
+            if (!retTuple.getF().isExist()) {
+                byteReceiver.before(null);
+                byteReceiver.finish();
+            } else {
+                byteReceiver.before(retTuple.getF().getFile());
+                StreamResolver.readFrameBody(retTuple.getS().getBodyLength(), client.getConnManager(), byteReceiver);
+                byteReceiver.finish();
+            }
+        } catch (Exception e) {
+            client.destory();
+            client = null;
             throw e;
         } finally {
-            if (broken) {
-                Const.getPool().returnBrokenBridge(member.getEndPoint(), connBridge);
-            } else {
-                Const.getPool().returnBridge(member.getEndPoint(), connBridge);
+            if (null != client) {
+                client.close();
             }
         }
     }
 
     @Override
-    public void download(String path, IReader byteReceiver) throws Exception {
+    public void download(String path, IDownloadReader byteReceiver) throws Exception {
         this.download(path, 0, -1, byteReceiver);
     }
 
@@ -320,7 +360,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
             if (null != exclude && exclude.contains(m)) {
                 continue;
             }
-            if (null != instanceId && !"".equals(instanceId) && Objects.equals(m.getInstance_id(), instanceId)) {
+            if (null != instanceId && !"".equals(instanceId) && Objects.equals(m.getInstanceId(), instanceId)) {
                 return m;
             }
             if (forUpload && m.isReadOnly()) {
@@ -344,7 +384,6 @@ public class GodfsApiClientImpl implements GodfsApiClient {
     private ObjectTuple<StorageDO, TcpBridgeClient> selectUsableStorageMember(String group, boolean forUpload) {
         Set<StorageDO> excludes = null;
         StorageDO member;
-        Bridge connBridge;
         // select specify nodes which match the group and can upload
         Set<StorageDO> members = MemberManager.getMembersByGroup(forUpload ? group : null, false);
         if (null == members || members.isEmpty()) {
@@ -356,48 +395,28 @@ public class GodfsApiClientImpl implements GodfsApiClient {
             if (null == member) {
                 throw new IllegalStateException("no storage server available [4].");
             }
+            ServerInfo info = ServerInfo.fromStorage(member);
+            AddrTuple add = info.GetHostAndPortByAccessFlag();
+            TcpBridgeClient client = null;
             try {
-                ServerInfo info = ServerInfo.fromTracker()
-                logger.debug("try to get connection for storage server[{}:{}].", member.getAddr(), member.getPort());
-                connBridge = Const.getPool().getBridge(member.getEndPoint());
-                return new Tuple(member, connBridge);
+                logger.debug("try to get connection for storage server[{}:{}].", add.getHost(), member.getPort());
+                client = new TcpBridgeClient(info);
+                client.connect();
+                client.validate();
+                return new ObjectTuple<StorageDO, TcpBridgeClient>(member, client);
             } catch (Exception e) {
                 if (null == excludes) {
                     excludes = new HashSet<>(2);
                     excludes.add(member);
                 }
-                logger.error("error getting connection for storage server[{}:{}] duo to: {}", member.getAddr(), member.getPort(), e.getMessage());
+                if (null != client) {
+                    client.destory();
+                    client = null;
+                }
+                logger.error("error getting connection for storage server[{}:{}] duo to: {}", add.getHost(), add.getPort(), e.getMessage());
             } finally {
-                MemberManager.increaseWeight(EndPoint.fromMember(member), 1);
+                MemberManager.increaseWeight(member.getUuid(), 1);
             }
         }
     }
-
-
-    private class Tuple {
-        private ExpireMember f;
-        private Bridge s;
-
-        public Tuple(ExpireMember f, Bridge s) {
-            this.f = f;
-            this.s = s;
-        }
-
-        public ExpireMember getF() {
-            return f;
-        }
-
-        public void setF(ExpireMember f) {
-            this.f = f;
-        }
-
-        public Bridge getS() {
-            return s;
-        }
-
-        public void setS(Bridge s) {
-            this.s = s;
-        }
-    }
-
 }

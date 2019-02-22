@@ -39,7 +39,10 @@ public class TcpBridgeClient {
         }
         Socket conn = Commons.connPool.getConn(this.server);
         AddrTuple add = this.server.GetHostAndPortByAccessFlag();
-        logger.debug("connect to", add.getHost() + ":" + add.getPort(), "success");
+        if (null == conn) {
+            throw new IOException("error get connection from server " + add.getHost() + ":" + add.getPort());
+        }
+        logger.debug("connect to {}:{} success", add.getHost(), add.getPort());
         this.connManager = new ConnectionManager(this.server, conn, Commons.CLIENT_SIDE);
         this.connManager.setState(Commons.STATE_CONNECTED);
     }
@@ -121,5 +124,17 @@ public class TcpBridgeClient {
         String metaStr = new String(frame.getFrameMeta());
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(metaStr, type);
+    }
+
+    public void close() {
+        if (null != this.getConnManager()) {
+            this.getConnManager().close();
+        }
+    }
+
+    public void destory() {
+        if (null != this.getConnManager()) {
+            this.getConnManager().destroy();
+        }
     }
 }

@@ -13,6 +13,9 @@ public class StorageDO {
     @JsonProperty("advertise_addr")
     private String advertiseAddr;
 
+    @JsonProperty("secret")
+    private String secret;
+
     @JsonProperty("advertise_port")
     private Integer advertisePort;
 
@@ -301,5 +304,13 @@ public class StorageDO {
 
     public void setExpireTime(long expireTime) {
         this.expireTime = expireTime;
+    }
+
+    public String getSecret() {
+        return secret;
+    }
+
+    public void setSecret(String secret) {
+        this.secret = secret;
     }
 }

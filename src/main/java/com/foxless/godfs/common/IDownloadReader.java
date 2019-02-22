@@ -1,6 +1,12 @@
 package com.foxless.godfs.common;
 
-public interface IReader {
+public interface IDownloadReader {
+    /**
+     * pass the file info before download file.
+     * if fileVO is null, it means file not exists.
+     * @param fileVO
+     */
+    void before(FileVO fileVO);
     /**
      * custom handler for download file.
      * @param buffer

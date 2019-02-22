@@ -1,9 +1,12 @@
 package com.foxless.godfs.bridge;
 
+import com.foxless.godfs.common.Const;
+import com.foxless.godfs.common.IDownloadReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -19,6 +22,22 @@ public class StreamResolver {
                 break;
             }
             int read1 = manager.getConn().getInputStream().read(buff, read, len - read);
+            if (read1 <= len - read) {
+                read += read1;
+                continue;
+            }
+        }
+        return len;
+    }
+
+    // ReadBytes common bytes reader, if error occurs, it will close automatically
+    public static int readBytes(byte[] buff, int len, InputStream ips) throws IOException {
+        int read = 0;
+        for (;;) {
+            if (read >= len) {
+                break;
+            }
+            int read1 = ips.read(buff, read, len - read);
             if (read1 <= len - read) {
                 read += read1;
                 continue;
@@ -53,7 +72,6 @@ public class StreamResolver {
     // writeFrame write frame to server/client.
     public static void writeFrame(ConnectionManager manager, Frame frame) throws IOException {
         // prepare frame meta
-        byte[] tmpBuf = new byte[8];
         ByteBuffer headerBuff = ByteBuffer.allocate(Commons.FRAME_HEAD_SIZE + frame.getFrameMeta().length);
         if (frame.getOperation() == Commons.FRAME_OPERATION_NONE){
             frame.setOperation(Commons.FRAME_OPERATION_NONE);
@@ -84,6 +102,24 @@ public class StreamResolver {
     public static byte[] readFrameMeta(int metaSize, ConnectionManager manager) throws IOException {
         byte[] tmp = new byte[metaSize];
         readBytes(tmp, metaSize, manager);
+        // should never happen, mark as broken connection
+        return tmp;
+    }
+
+    // readFrameMeta reads frame's meta info
+    public static byte[] readFrameBody(long bodySize, ConnectionManager manager, IDownloadReader reader) throws IOException {
+        byte[] tmp = new byte[Const.BUFFER_SIZE];
+        int nextRead = 0;
+        long read = 0;
+        while (read < bodySize) {
+            if (bodySize - read > Const.BUFFER_SIZE) {
+                nextRead = Const.BUFFER_SIZE;
+            } else {
+                nextRead = (int)(bodySize - read);
+            }
+            read += readBytes(tmp, nextRead, manager);
+            reader.read(tmp, 0, nextRead);
+        }
         // should never happen, mark as broken connection
         return tmp;
     }
