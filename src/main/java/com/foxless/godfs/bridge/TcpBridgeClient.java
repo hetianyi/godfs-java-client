@@ -26,9 +26,6 @@ public class TcpBridgeClient {
     }
 
     public ConnectionManager getConnManager() {
-        if (this.connManager == null) {
-            return new ConnectionManager();
-        }
         return this.connManager;
     }
 
@@ -114,7 +111,7 @@ public class TcpBridgeClient {
                 throw new IllegalStateException("receive empty response from server");
             }
         } catch (Exception e) {
-            Commons.connPool.returnBrokenConnBridge(server, this.connManager.getConn());
+            Commons.connPool.returnBrokenConnBridge(server, null == this.connManager ? null : this.connManager.getConn());
             throw e;
         }
     }

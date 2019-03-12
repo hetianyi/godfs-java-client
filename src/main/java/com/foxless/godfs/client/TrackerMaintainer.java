@@ -66,7 +66,7 @@ public class TrackerMaintainer {
         public void run() {
             try {
                 logger.debug("synchronize storage servers.");
-                if (null == client) {
+                if (null == client || client.getConnManager() == null) {
                     ServerInfo server = ServerInfo.fromConnStr(tracker.getHost() + ":" + tracker.getPort());
                     server.setSecret(tracker.getSecret());
                     client = new TcpBridgeClient(server);
@@ -86,6 +86,7 @@ public class TrackerMaintainer {
                 }
             } catch (Exception e) {
                 logger.error(e.getMessage());
+                e.printStackTrace();
                 if (null != client) {
                     client.destory();
                 }
