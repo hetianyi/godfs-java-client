@@ -88,7 +88,7 @@ public class TrackerMaintainer {
                 logger.error(e.getMessage());
                 e.printStackTrace();
                 if (null != client) {
-                    client.destory();
+                    client.destroy();
                 }
             } finally {
                 if (null != client) {

@@ -129,7 +129,7 @@ public class TcpBridgeClient {
         }
     }
 
-    public void destory() {
+    public void destroy() {
         if (null != this.getConnManager()) {
             this.getConnManager().destroy();
         }

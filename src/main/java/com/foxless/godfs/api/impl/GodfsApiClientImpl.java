@@ -81,7 +81,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                 } catch (Exception e) {
                     logger.error("error query file from tracker server [{}:{}] due to: {}", tracker.getHost(), tracker.getPort(), e.getMessage());
                     if (null != client) {
-                        client.destory();
+                        client.destroy();
                         client = null;
                     }
                     continue;
@@ -139,7 +139,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                         client.close();
                     } catch (IOException e) {
                         e.printStackTrace();
-                        client.destory();
+                        client.destroy();
                     }
                 }
 
@@ -152,7 +152,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
         } catch (Exception e) {
             err = true;
             if (null != client) {
-                client.destory();
+                client.destroy();
             }
             throw e;
         } finally {
@@ -325,7 +325,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                 byteReceiver.finish();
             }
         } catch (Exception e) {
-            client.destory();
+            client.destroy();
             client = null;
             throw e;
         } finally {
@@ -410,7 +410,7 @@ public class GodfsApiClientImpl implements GodfsApiClient {
                     excludes.add(member);
                 }
                 if (null != client) {
-                    client.destory();
+                    client.destroy();
                     client = null;
                 }
                 logger.error("error getting connection for storage server[{}:{}] duo to: {}", add.getHost(), add.getPort(), e.getMessage());
