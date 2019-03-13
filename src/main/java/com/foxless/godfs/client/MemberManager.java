@@ -35,7 +35,7 @@ public class MemberManager {
                 for (StorageDO m1 : members) {
                     for (StorageDO m2 : ret) {
                         // if a storage alive again, add expire time then.
-                        if (m1.getUuid() == m2.getUuid()) {
+                        if (Objects.equals(m1.getUuid(), m2.getUuid())) {
                             hit = true;
                             m2.setExpireTime(System.currentTimeMillis() + TrackerMaintainer.SCHEDULE_INTERVAL*3);
                             log.debug("renewal storage members: {}:{} of tracker: {}:{}", m1.getHost(), m1.getPort(), tracker.getHost(), tracker.getPort());
